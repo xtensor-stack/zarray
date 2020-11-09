@@ -18,17 +18,9 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-7
-      env: COMPILER=gcc GCC=7
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
             - g++-5
       env: COMPILER=gcc GCC=5 DISABLE_XSIMD=1
-   - os: linux
+    - os: linux
       addons:
         apt:
           sources:
@@ -44,7 +36,7 @@ matrix:
           packages:
             - g++-7
       env: COMPILER=gcc GCC=7
-   - os: linux
+    - os: linux
       addons:
         apt:
           sources:
