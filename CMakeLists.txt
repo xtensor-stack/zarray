@@ -92,6 +92,8 @@ target_link_libraries(zarray INTERFACE xtensor)
 
 OPTION(BUILD_TESTS "zarray test suite" OFF)
 OPTION(DOWNLOAD_GTEST "build gtest from downloaded sources" OFF)
+OPTION(CPP17 "enables C++17" OFF)
+OPTION(CPP20 "enables C++20 (experimental)" OFF)
 OPTION(DISABLE_MSVC_ITERATOR_CHECK "Disable the MVSC iterator check" ON)
 
 if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
