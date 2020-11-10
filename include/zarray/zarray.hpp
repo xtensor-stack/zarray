@@ -14,7 +14,7 @@
 
 #include <xtl/xmultimethods.hpp>
 
-#include "xarray.hpp"
+#include "xtensor/xarray.hpp"
 #include "zarray_impl.hpp"
 #include "zassign.hpp"
 
@@ -198,4 +198,3 @@ namespace xt
 }
 
 #endif
-
