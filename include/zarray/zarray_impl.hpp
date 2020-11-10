@@ -10,8 +10,8 @@
 #ifndef XTENSOR_ZARRAY_IMPL_HPP
 #define XTENSOR_ZARRAY_IMPL_HPP
 
-#include "xarray.hpp"
-#include "xchunked_array.hpp"
+#include "xtensor/xarray.hpp"
+#include "xtensor/xchunked_array.hpp"
 
 namespace xt
 {
@@ -387,4 +387,3 @@ namespace xt
 }
 
 #endif
-

@@ -10,7 +10,7 @@
 #ifndef XTENSOR_ZASSIGN_HPP
 #define XTENSOR_ZASSIGN_HPP
 
-#include "xassign.hpp"
+#include "xtensor/xassign.hpp"
 #include "zarray_impl.hpp"
 
 namespace xt
@@ -32,4 +32,3 @@ namespace xt
 }
 
 #endif
-
