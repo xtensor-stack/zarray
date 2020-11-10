@@ -10,7 +10,7 @@
 #ifndef XTENSOR_ZMATH_HPP
 #define XTENSOR_ZMATH_HPP
 
-#include "xmath.hpp"
+#include "xtensor/xmath.hpp"
 #include "zarray_impl.hpp"
 
 namespace xt
