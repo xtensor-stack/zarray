@@ -8,8 +8,8 @@
 ****************************************************************************/
 
 #include "gtest/gtest.h"
-#include "xtensor/zarray.hpp"
-#include "xtensor/zfunction.hpp"
+#include "zarray/zarray.hpp"
+#include "zarray/zfunction.hpp"
 
 #ifndef XTENSOR_DISABLE_EXCEPTIONS
 namespace xt
