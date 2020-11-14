@@ -17,6 +17,8 @@
 #include "xtensor/xarray.hpp"
 #include "zarray_impl.hpp"
 #include "zassign.hpp"
+#include "zfunction.hpp"
+#include "zmath.hpp"
 
 namespace xt
 {
@@ -102,7 +104,7 @@ namespace xt
     template <class E>
     inline void zarray::init_implementation(const xexpression<E>& e, zarray_expression_tag)
     {
-        p_impl = nullptr;
+        p_impl = e.derived_cast().allocate_result();
         semantic_base::assign(e);
     }
 
@@ -124,14 +126,19 @@ namespace xt
 
     inline zarray& zarray::operator=(const zarray& rhs)
     {
-        zarray tmp(rhs);
-        swap(tmp);
+        zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl);
         return *this;
     }
 
     inline zarray::zarray(zarray&& rhs)
         : p_impl(std::move(rhs.p_impl))
     {
+    }
+
+    inline zarray& zarray::operator=(zarray&& rhs)
+    {
+        zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl);
+        return *this;
     }
 
     template <class E>
@@ -150,12 +157,6 @@ namespace xt
     inline zarray::zarray(xexpression<E>&& e)
     {
         init_implementation(std::move(e).derived_cast(), extension::get_expression_tag_t<std::decay_t<E>>());
-    }
-
-    inline zarray& zarray::operator=(zarray&& rhs)
-    {
-        swap(rhs);
-        return *this;
     }
 
     template <class E>

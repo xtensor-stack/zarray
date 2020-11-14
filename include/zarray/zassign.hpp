@@ -23,9 +23,7 @@ namespace xt
         template <class E1, class E2>
         static void assign_xexpression(xexpression<E1>& e1, const xexpression<E2>& e2)
         {
-            std::unique_ptr<zarray_impl> res_impl = e2.derived_cast().allocate_result();
-            e2.derived_cast().assign_to(*res_impl);
-            e1.derived_cast() = std::move(res_impl);
+            e2.derived_cast().assign_to(e1.derived_cast().get_implementation());
         }
     };
 

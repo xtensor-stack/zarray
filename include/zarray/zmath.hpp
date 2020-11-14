@@ -38,6 +38,50 @@ namespace xt
     struct get_zmapped_functor<XFUN>                                               \
     { using type = ZFUN; }
 
+    namespace detail
+    {
+        struct xassign_dummy_functor {};
+        struct xmove_dummy_functor {};
+    }
+
+    struct zassign_functor
+    {
+        template <class T, class R>
+        static void run(const ztyped_array<T>& z, ztyped_array<R>& zres)
+        {
+            detail::zassign_data(zres.get_array(), z.get_array());
+        }
+
+        template <class T>
+        static size_t index(const ztyped_array<T>&)
+        {
+            return ztyped_array<T>::get_class_static_index();
+        }
+    };
+    XTENSOR_ZMAPPED_FUNCTOR(zassign_functor, detail::xassign_dummy_functor);
+
+    struct zmove_functor
+    {
+        template <class T, class R>
+        static void run(const ztyped_array<T>& z, ztyped_array<R>& zres)
+        {
+            detail::zassign_data(zres.get_array(), z.get_array());
+        }
+
+        template <class T>
+        static void run(const ztyped_array<T>& z, ztyped_array<T>& zres)
+        {
+            zres.get_array().derived_cast() = std::move(z.get_array().derived_cast());
+        }
+
+        template <class T>
+        static size_t index(const ztyped_array<T>&)
+        {
+            return ztyped_array<T>::get_class_static_index();
+        }
+    };
+    XTENSOR_ZMAPPED_FUNCTOR(zmove_functor, detail::xmove_dummy_functor);
+
 #define XTENSOR_UNARY_ZOPERATOR(ZNAME, XOP, XFUN)                                  \
     struct ZNAME                                                                   \
     {                                                                              \
