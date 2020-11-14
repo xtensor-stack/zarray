@@ -444,6 +444,8 @@ namespace xt
     {
         inline void init_zdispatchers()
         {
+            zdispatcher_t<xassign_dummy_functor, 1>::init();
+            zdispatcher_t<xmove_dummy_functor, 1>::init();
             zdispatcher_t<identity, 1>::init();
             zdispatcher_t<negate, 1>::init();
             zdispatcher_t<plus, 2>::init();
