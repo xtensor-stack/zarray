@@ -50,10 +50,25 @@ namespace xt
 
     namespace detail
     {
+        template <class E>
+        struct zargument_type
+        {
+            using type = E;
+        };
+
+        template <class T>
+        struct zargument_type<xscalar<T>>
+        {
+            using type = zscalar_wrapper<xscalar<T>>;
+        };
+
+        template <class E>
+        using zargument_type_t = typename zargument_type<E>::type;
+
         template <class F, class... E>
         struct select_xfunction_expression<zarray_expression_tag, F, E...>
         {
-            using type = zfunction<F, E...>;
+            using type = zfunction<F, zargument_type_t<E>...>;
         };
     }
 
@@ -65,7 +80,6 @@ namespace xt
     
     namespace detail
     {
-
         template <class E>
         struct zfunction_argument
         {
@@ -93,6 +107,20 @@ namespace xt
             static const zarray_impl& get_array_impl(const E& e, zarray_impl&)
             {
                 return e.get_implementation();
+            }
+        };
+
+        template <class CTE>
+        struct zfunction_argument<zscalar_wrapper<CTE>>
+        {
+            static std::size_t get_index(const zscalar_wrapper<CTE>& e)
+            {
+                return e.get_class_index();
+            }
+
+            static const zarray_impl& get_array_impl(const zscalar_wrapper<CTE>& e, zarray_impl&)
+            {
+                return e;
             }
         };
 
