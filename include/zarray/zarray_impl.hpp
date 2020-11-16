@@ -12,6 +12,7 @@
 
 #include "xtensor/xarray.hpp"
 #include "xtensor/xchunked_array.hpp"
+#include "xtensor/xscalar.hpp"
 
 namespace xt
 {
@@ -123,6 +124,39 @@ namespace xt
         CTE m_expression;
         mutable xarray<value_type> m_cache;
         mutable bool m_cache_initialized;
+    };
+
+    /*******************
+     * zscalar_wrapper *
+     *******************/
+
+    template <class CTE>
+    class zscalar_wrapper : public ztyped_array<typename std::decay_t<CTE>::value_type>
+    {
+    public:
+
+        using self_type = zscalar_wrapper;
+        using value_type = typename std::decay_t<CTE>::value_type;
+        using base_type = ztyped_array<value_type>;
+
+        template <class E>
+        zscalar_wrapper(E&& e);
+
+        zscalar_wrapper(zscalar_wrapper&&) = default;
+
+        virtual ~zscalar_wrapper() = default;
+
+        xarray<value_type>& get_array() override;
+        const xarray<value_type>& get_array() const override;
+
+        self_type* clone() const override;
+
+    private:
+
+        zscalar_wrapper(const zscalar_wrapper&) = default;
+
+        CTE m_expression;
+        xarray<value_type> m_array;
     };
 
     /******************
@@ -249,6 +283,37 @@ namespace xt
         }
     }
 
+    /*******************
+     * zscalar_wrapper *
+     *******************/
+
+    template <class CTE>
+    template <class E>
+    inline zscalar_wrapper<CTE>::zscalar_wrapper(E&& e)
+        : base_type()
+        , m_expression(std::forward<E>(e))
+        , m_array(m_expression())
+    {
+    }
+
+    template <class CTE>
+    inline auto zscalar_wrapper<CTE>::get_array() -> xarray<value_type>&
+    {
+        return m_array;
+    }
+
+    template <class CTE>
+    inline auto zscalar_wrapper<CTE>::get_array() const -> const xarray<value_type>&
+    {
+        return m_array;
+    }
+
+    template <class CTE>
+    inline auto zscalar_wrapper<CTE>::clone() const -> self_type*
+    {
+        return new self_type(*this);
+    }
+    
     /******************
      * zarray_wrapper *
      ******************/

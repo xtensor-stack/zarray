@@ -9,7 +9,6 @@
 
 #include "gtest/gtest.h"
 #include "zarray/zarray.hpp"
-#include "zarray/zfunction.hpp"
 
 namespace xt
 {
@@ -103,105 +102,40 @@ namespace xt
         EXPECT_EQ(db.get_array<double>(), c);
     }
 
-    // TODO : move to dedicated test file
-    TEST(zarray, dispatching)
+    TEST(zarray, extended_copy)
     {
-        using dispatcher_type = zdispatcher_t<math::exp_fun, 1>;
-        dispatcher_type::init();
+        zdispatcher_t<detail::plus, 2>::init();
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        xarray<double> b = {{3., 1.}, {2., 5.}};
+        xarray<double> res = {{4., 3.}, {5., 9.}};
 
-        xarray<double> a = {{0.5, 1.5}, {2.5, 3.5}};
-        xarray<double> expa = {{std::exp(0.5), std::exp(1.5)}, {std::exp(2.5), std::exp(3.5)}};
-        xarray<double> res;
         zarray za(a);
-        zarray zres(res);
+        zarray zb(b);
+        zarray zsum = za + zb;
+        EXPECT_EQ(zsum.get_array<double>(), res);
+    }
 
-        dispatcher_type::dispatch(za.get_implementation(), zres.get_implementation());
+    TEST(zarray, extended_assign)
+    {
+        zdispatcher_t<detail::plus, 2>::init();
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        xarray<double> b = {{3., 1.}, {2., 5.}};
+        xarray<double> c = {{1., 1.}, {0., 0.}};
+        xarray<double> res = {{4., 3.}, {5., 9.}};
 
-        EXPECT_EQ(expa, res);
+        zarray za(a);
+        zarray zb(b);
+        zarray zc1 = xarray<double>(c);
+        zc1 = za + zb;
+        EXPECT_EQ(zc1.get_array<double>(), res);
+        EXPECT_NE(c, res);
+
+        zarray zc2(c);
+        zc2 = za + zb;
+        EXPECT_EQ(c, res);
     }
 
     // TODO: move to dedicated test file
-    TEST(zarray, zfunction)
-    {
-        using exp_dispatcher_type = zdispatcher_t<math::exp_fun, 1>;
-        exp_dispatcher_type::init();
-
-        using add_dispatcher_type = zdispatcher_t<detail::plus, 2>;
-        add_dispatcher_type::init();
-
-        using nested_zfunction_type = zfunction<math::exp_fun, const zarray&>;
-        using zfunction_type = zfunction<detail::plus, const zarray&, nested_zfunction_type>;
-
-        xarray<double> a = {{0.5, 1.5}, {2.5, 3.5}};
-        xarray<double> b = {{-0.2, 2.4}, {1.3, 4.7}};
-        xarray<double> res;
-
-        zarray za(a);
-        zarray zb(b);
-        zarray zres(res);
-
-        zfunction_type f(zplus(), za, nested_zfunction_type(zexp(), zb));
-        f.assign_to(zres.get_implementation());
-
-        auto expected = xarray<double>::from_shape({2, 2});
-        std::transform(a.cbegin(), a.cend(), b.cbegin(), expected.begin(),
-                       [](const double& lhs, const double& rhs) { return lhs + std::exp(rhs); });
-
-        EXPECT_TRUE(all(isclose(res, expected)));
-
-        size_t res_index = f.get_result_type_index();
-        EXPECT_EQ(res_index, ztyped_array<double>::get_class_static_index());
-    }
-
-    TEST(zarray, operations)
-    {
-        using exp_dispatcher_type = zdispatcher_t<math::exp_fun, 1>;
-        exp_dispatcher_type::init();
-
-        using add_dispatcher_type = zdispatcher_t<detail::plus, 2>;
-        add_dispatcher_type::init();
-
-        xarray<double> a = {{0.5, 1.5}, {2.5, 3.5}};
-        xarray<double> b = {{-0.2, 2.4}, {1.3, 4.7}};
-        xarray<double> res;
-
-        zarray za(a);
-        zarray zb(b);
-        zarray zres(res);
-
-        auto f = za + xt::exp(zb);
-        f.assign_to(zres.get_implementation());
-
-        auto expected = xarray<double>::from_shape({2, 2});
-        std::transform(a.cbegin(), a.cend(), b.cbegin(), expected.begin(),
-                       [](const double& lhs, const double& rhs) { return lhs + std::exp(rhs); });
-
-        EXPECT_TRUE(all(isclose(res, expected)));
-    }
-
-    TEST(zarray, assign)
-    {
-        using exp_dispatcher_type = zdispatcher_t<math::exp_fun, 1>;
-        exp_dispatcher_type::init();
-
-        using add_dispatcher_type = zdispatcher_t<detail::plus, 2>;
-        add_dispatcher_type::init();
-
-        xarray<double> a = {{0.5, 1.5}, {2.5, 3.5}};
-        xarray<double> b = {{-0.2, 2.4}, {1.3, 4.7}};
-
-        zarray za(a);
-        zarray zb(b);
-
-        zarray zres = za + xt::exp(zb);
-        auto expected = xarray<double>::from_shape({2, 2});
-        std::transform(a.cbegin(), a.cend(), b.cbegin(), expected.begin(),
-                       [](const double& lhs, const double& rhs) { return lhs + std::exp(rhs); });
-
-        const auto& res = zres.get_array<double>();
-        EXPECT_TRUE(all(isclose(res, expected)));
-    }
-
     TEST(zarray, chunked_array)
     {
         using shape_type = std::vector<size_t>;
