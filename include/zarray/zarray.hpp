@@ -82,6 +82,7 @@ namespace xt
         std::size_t dimension() const;
         const shape_type& shape() const;
         void resize(const shape_type& shape);
+        void resize(shape_type&& shape);
         void broadcast_shape(shape_type& shape, bool reuse_cache = false) const;
 
         const zchunked_array& as_chunked_array() const;
@@ -211,6 +212,11 @@ namespace xt
     inline void zarray::resize(const shape_type& shape)
     {
         p_impl->resize(shape);
+    }
+
+    inline void zarray::resize(shape_type&& shape)
+    {
+        p_impl->resize(std::move(shape));
     }
 
     inline void zarray::broadcast_shape(shape_type& shape, bool reuse_cache) const

@@ -12,6 +12,27 @@
 
 namespace xt
 {
+    TEST(zfunction, shape)
+    {
+        xarray<double> a = {{0.5, 1.5}, {2.5, 3.5}};
+        xarray<double> b = {0.5, 1.5};
+        zarray za(a);
+        zarray zb(b);
+
+        using zfunction_type = zfunction<detail::plus, const zarray&, const zarray&>;
+        zfunction_type f(zplus(), za, zb);
+
+        auto dim = f.dimension();
+        EXPECT_EQ(dim, a.dimension());
+
+        auto shape = f.shape();
+        EXPECT_EQ(shape, a.shape());
+
+        decltype(shape) shape2 = {1u, 2u};
+        f.broadcast_shape(shape2);
+        EXPECT_EQ(shape2, a.shape());
+    }
+
     TEST(zfunction, dispatching)
     {
         using dispatcher_type = zdispatcher_t<math::exp_fun, 1>;
