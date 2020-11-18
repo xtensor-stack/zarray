@@ -42,6 +42,7 @@ namespace xt
         using expression_tag = zarray_expression_tag;
         using semantic_base = xcontainer_semantic<zarray>;
         using implementation_ptr = std::unique_ptr<zarray_impl>;
+        using shape_type = zarray_impl::shape_type;
 
         zarray() = default;
         ~zarray() = default;
@@ -77,6 +78,11 @@ namespace xt
 
         template <class T>
         const xarray<T>& get_array() const;
+
+        std::size_t dimension() const;
+        const shape_type& shape() const;
+        void resize(const shape_type& shape);
+        void broadcast_shape(shape_type& shape, bool reuse_cache = false) const;
 
         const zchunked_array& as_chunked_array() const;
 
@@ -190,6 +196,26 @@ namespace xt
     inline const xarray<T>& zarray::get_array() const
     {
         return dynamic_cast<const ztyped_array<T>*>(p_impl.get())->get_array();
+    }
+
+    inline std::size_t zarray::dimension() const
+    {
+        return p_impl->dimension();
+    }
+
+    inline auto zarray::shape() const -> const shape_type&
+    {
+        return p_impl->shape();
+    }
+
+    inline void zarray::resize(const shape_type& shape)
+    {
+        p_impl->resize(shape);
+    }
+
+    inline void zarray::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    {
+        p_impl->broadcast_shape(shape, reuse_cache);
     }
 
     inline const zchunked_array& zarray::as_chunked_array() const

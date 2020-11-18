@@ -135,10 +135,50 @@ namespace xt
         EXPECT_EQ(c, res);
     }
 
+    TEST(zarray, shape)
+    {
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        zarray za(a);
+
+        std::size_t size = za.dimension();
+        EXPECT_EQ(size, 2u);
+
+        auto shape = za.shape();
+        EXPECT_EQ(shape, a.shape());
+    }
+
+    TEST(zarray, resize)
+    {
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        zarray za(a);
+        
+        dynamic_shape<size_t> sh = {3u, 4u, 2u};
+        za.resize(sh);
+        EXPECT_EQ(a.shape(), sh);
+    }
+
+    TEST(zarray, broadcast_shape)
+    {
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        zarray za(a);
+
+        dynamic_shape<size_t> sh1 = {1u, 1u};
+        dynamic_shape<size_t> res1 = {2u, 2u};
+
+        za.broadcast_shape(sh1);
+        EXPECT_EQ(sh1, res1);
+
+        dynamic_shape<size_t> sh2 = {3u, 1u, 2u};
+        dynamic_shape<size_t> res2 = {3u, 2u, 2u};
+
+        za.broadcast_shape(sh2);
+        EXPECT_EQ(sh2, res2);
+    }
+
     // TODO: move to dedicated test file
     TEST(zarray, chunked_array)
     {
-        using shape_type = std::vector<size_t>;
+        using shape_type =  zarray::shape_type;
         shape_type shape = {10, 10, 10};
         shape_type chunk_shape = {2, 3, 4};
         auto a = chunked_array<double>(shape, chunk_shape);
