@@ -12,7 +12,9 @@
 
 #include "xtensor/xarray.hpp"
 #include "xtensor/xchunked_array.hpp"
+#include "xtensor/xnoalias.hpp"
 #include "xtensor/xscalar.hpp"
+#include "xtensor/xshape.hpp"
 
 namespace xt
 {
@@ -53,6 +55,7 @@ namespace xt
     public:
 
         using self_type = zarray_impl;
+        using shape_type = dynamic_shape<std::size_t>;
 
         virtual ~zarray_impl() = default;
 
@@ -61,6 +64,11 @@ namespace xt
         zarray_impl& operator=(zarray_impl&&) = delete;
 
         virtual self_type* clone() const = 0;
+
+        virtual std::size_t dimension() const = 0;
+        virtual const shape_type& shape() const = 0;
+        virtual void resize(const shape_type& shape) = 0;
+        virtual void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const = 0;
 
         XTL_IMPLEMENT_INDEXABLE_CLASS()
 
@@ -78,6 +86,9 @@ namespace xt
     class ztyped_array : public zarray_impl
     {
     public:
+
+        using base_type = zarray_impl;
+        using shape_type = base_type::shape_type;
 
         virtual ~ztyped_array() = default;
 
@@ -104,6 +115,7 @@ namespace xt
         using self_type = zexpression_wrapper<CTE>;
         using value_type = typename std::decay_t<CTE>::value_type;
         using base_type = ztyped_array<value_type>;
+        using shape_type = typename base_type::shape_type;
 
         template <class E>
         zexpression_wrapper(E&& e);
@@ -114,6 +126,11 @@ namespace xt
         const xarray<value_type>& get_array() const override;
 
         self_type* clone() const override;
+
+        std::size_t dimension() const override;
+        const shape_type& shape() const override;
+        void resize(const shape_type&) override;
+        void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
     private:
 
@@ -138,6 +155,7 @@ namespace xt
         using self_type = zscalar_wrapper;
         using value_type = typename std::decay_t<CTE>::value_type;
         using base_type = ztyped_array<value_type>;
+        using shape_type = typename base_type::shape_type;
 
         template <class E>
         zscalar_wrapper(E&& e);
@@ -150,6 +168,11 @@ namespace xt
         const xarray<value_type>& get_array() const override;
 
         self_type* clone() const override;
+
+        std::size_t dimension() const override;
+        const shape_type& shape() const override;
+        void resize(const shape_type&) override;
+        void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
     private:
 
@@ -171,6 +194,7 @@ namespace xt
         using self_type = zarray_wrapper;
         using value_type = typename std::decay_t<CTE>::value_type;
         using base_type = ztyped_array<value_type>;
+        using shape_type = typename base_type::shape_type;
 
         template <class E>
         zarray_wrapper(E&& e);
@@ -181,6 +205,11 @@ namespace xt
         const xarray<value_type>& get_array() const override;
 
         self_type* clone() const override;
+
+        std::size_t dimension() const override;
+        const shape_type& shape() const override;
+        void resize(const shape_type&) override;
+        void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
     private:
 
@@ -197,7 +226,7 @@ namespace xt
     {
     public:
 
-        using shape_type = std::vector<std::size_t>;
+        using shape_type = xt::dynamic_shape<std::size_t>;
 
         virtual ~zchunked_array() = default;
         virtual const shape_type& chunk_shape() const = 0;
@@ -212,7 +241,7 @@ namespace xt
         using self_type = zchunked_wrapper;
         using value_type = typename std::decay_t<CTE>::value_type;
         using base_type = ztyped_array<value_type>;
-        using shape_type = typename zchunked_array::shape_type;
+        using shape_type = zchunked_array::shape_type;
 
         template <class E>
         zchunked_wrapper(E&& e);
@@ -223,6 +252,11 @@ namespace xt
         const xarray<value_type>& get_array() const override;
 
         self_type* clone() const override;
+
+        std::size_t dimension() const override;
+        const shape_type& shape() const override;
+        void resize(const shape_type& shape) override;
+        void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
         const shape_type& chunk_shape() const override;
 
@@ -274,11 +308,36 @@ namespace xt
     }
 
     template <class CTE>
+    inline std::size_t zexpression_wrapper<CTE>::dimension() const
+    {
+        return m_expression.dimension();
+    }
+
+    template <class CTE>
+    inline auto zexpression_wrapper<CTE>::shape() const -> const shape_type&
+    {
+        compute_cache();
+        return m_cache.shape();
+    }
+
+    template <class CTE>
+    inline void zexpression_wrapper<CTE>::resize(const shape_type& shape)
+    {
+        throw std::runtime_error("cannot resize expression wrapper");
+    }
+
+    template <class CTE>
+    inline void zexpression_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    {
+        return m_expression.broadcast_shape(shape, reuse_cache);
+    }
+    
+    template <class CTE>
     inline void zexpression_wrapper<CTE>::compute_cache() const
     {
         if (!m_cache_initialized)
         {
-            m_cache = m_expression;
+            noalias(m_cache) = m_expression;
             m_cache_initialized = true;
         }
     }
@@ -314,6 +373,30 @@ namespace xt
         return new self_type(*this);
     }
     
+    template <class CTE>
+    inline std::size_t zscalar_wrapper<CTE>::dimension() const
+    {
+        return m_array.dimension();
+    }
+
+    template <class CTE>
+    inline auto zscalar_wrapper<CTE>::shape() const -> const shape_type&
+    {
+        return m_array.shape();
+    }
+
+    template <class CTE>
+    inline void zscalar_wrapper<CTE>::resize(const shape_type&)
+    {
+        throw std::runtime_error("Cannot resize scalar wrapper");
+    }
+
+    template <class CTE>
+    inline void zscalar_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    {
+        m_array.broadcast_shape(shape, reuse_cache);
+    }
+    
     /******************
      * zarray_wrapper *
      ******************/
@@ -344,6 +427,30 @@ namespace xt
         return new self_type(*this);
     }
 
+    template <class CTE>
+    inline std::size_t zarray_wrapper<CTE>::dimension() const
+    {
+        return m_array.dimension();
+    }
+
+    template <class CTE>
+    inline auto zarray_wrapper<CTE>::shape() const -> const shape_type&
+    {
+        return m_array.shape();
+    }
+
+    template <class CTE>
+    inline void zarray_wrapper<CTE>::resize(const shape_type& shape)
+    {
+        m_array.resize(shape);
+    }
+
+    template <class CTE>
+    inline void zarray_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    {
+        m_array.broadcast_shape(shape, reuse_cache);
+    }
+    
     /********************
      * zchunked_wrapper *
      ********************/
@@ -382,6 +489,32 @@ namespace xt
         return new self_type(*this);
     }
 
+    template <class CTE>
+    inline std::size_t zchunked_wrapper<CTE>::dimension() const
+    {
+        return m_chunked_array.dimension();
+    }
+
+    template <class CTE>
+    inline auto zchunked_wrapper<CTE>::shape() const -> const shape_type&
+    {
+        return m_chunked_array.shape();
+    }
+
+    template <class CTE>
+    inline void zchunked_wrapper<CTE>::resize(const shape_type&)
+    {
+        //TODO: check this semantic
+        throw std::runtime_error("Cannot resize chunked wrapper");
+        //m_chunked_array.resize(shape, m_chunked_array.chunk_shape());
+    }
+
+    template <class CTE>
+    inline void zchunked_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    {
+        m_chunked_array.broadcast_shape(shape, reuse_cache);
+    }
+    
     template <class CTE>
     inline auto zchunked_wrapper<CTE>::chunk_shape() const -> const shape_type&
     {
