@@ -40,7 +40,7 @@ namespace xt
 
         xarray<double> a = {{0.5, 1.5}, {2.5, 3.5}};
         xarray<double> expa = {{std::exp(0.5), std::exp(1.5)}, {std::exp(2.5), std::exp(3.5)}};
-        xarray<double> res;
+        auto res = xarray<double>::from_shape({2, 2});
         zarray za(a);
         zarray zres(res);
 
@@ -62,7 +62,7 @@ namespace xt
 
         xarray<double> a = {{0.5, 1.5}, {2.5, 3.5}};
         xarray<double> b = {{-0.2, 2.4}, {1.3, 4.7}};
-        xarray<double> res;
+        auto res = xarray<double>::from_shape({2, 2});
 
         zarray za(a);
         zarray zb(b);
@@ -91,7 +91,7 @@ namespace xt
 
         xarray<double> a = {{0.5, 1.5}, {2.5, 3.5}};
         xarray<double> b = {{-0.2, 2.4}, {1.3, 4.7}};
-        xarray<double> res;
+        auto res = xarray<double>::from_shape({2, 2});
 
         zarray za(a);
         zarray zb(b);
@@ -118,7 +118,29 @@ namespace xt
         zarray za(a);
         zarray zres(res);
 
-        zres = za + 2.;
+        auto f = za + 2.;
+        using expected_type = zfunction<detail::plus, const zarray&, zscalar_wrapper<xscalar<double>>>;
+        EXPECT_TRUE((std::is_same<decltype(f), expected_type>::value));
+        
+        zres = f;
+        xarray<double> expected = {{3., 4.}, {5., 6.}};
+        EXPECT_EQ(zres.get_array<double>(), expected);
+    }
+
+    TEST(zfunction, broadcasting)
+    {
+        using add_dispatcher_type = zdispatcher_t<detail::plus, 2>;
+        add_dispatcher_type::init();
+
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        xarray<double> b = {1., 2.};
+        xarray<double> expected = a + b;
+
+        zarray za(a);
+        zarray zb(b);
+        zarray zres = za + zb;
+
+        EXPECT_EQ(zres.get_array<double>(), expected);
     }
 }
 

@@ -133,6 +133,7 @@ namespace xt
 
     inline zarray& zarray::operator=(const zarray& rhs)
     {
+        resize(rhs.shape());
         zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl);
         return *this;
     }
