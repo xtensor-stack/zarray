@@ -12,21 +12,10 @@
 
 #include "xtensor/xmath.hpp"
 #include "zarray_impl.hpp"
+#include "zassign.hpp"
 
 namespace xt
 {
-    namespace detail
-    {
-        // For further improvement: move shape computation
-        // at the beginning of a zarray assignment so it is computed
-        // only once
-        template <class E1, class E2>
-        inline void zassign_data(xexpression<E1>& e1, const xexpression<E2>& e2)
-        {
-            e1.derived_cast() = e2.derived_cast();
-        }
-    }
-
     template <class XF>
     struct get_zmapped_functor;
     
@@ -49,7 +38,7 @@ namespace xt
         template <class T, class R>
         static void run(const ztyped_array<T>& z, ztyped_array<R>& zres)
         {
-            detail::zassign_data(zres.get_array(), z.get_array());
+            zassign_wrapped_expression(zres.get_array(), z.get_array());
         }
 
         template <class T>
@@ -60,18 +49,28 @@ namespace xt
     };
     XTENSOR_ZMAPPED_FUNCTOR(zassign_functor, detail::xassign_dummy_functor);
 
+    template <class T, class U, class R = void>
+    using enable_same_types_t = std::enable_if_t<std::is_same<T, U>::value, R>;
+
+    template <class T, class U, class R = void>
+    using disable_same_types_t = std::enable_if_t<!std::is_same<T, U>::value, R>;
+    
     struct zmove_functor
     {
         template <class T, class R>
-        static void run(const ztyped_array<T>& z, ztyped_array<R>& zres)
+        static disable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres)
         {
-            detail::zassign_data(zres.get_array(), z.get_array());
+            // resize is not called in the move constructor of zarray
+            // to avoid useless dyanmic allocation if RHS is about
+            // to be moved, therefore we have to call it here.
+            zres.resize(z.shape());
+            zassign_wrapped_expression(zres.get_array(), z.get_array());
         }
 
-        template <class T>
-        static void run(const ztyped_array<T>& z, ztyped_array<T>& zres)
+        template <class T, class R>
+        static enable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres)
         {
-            zres.get_array().derived_cast() = std::move(z.get_array().derived_cast());
+            zres.get_array() = std::move(z.get_array());
         }
 
         template <class T>
@@ -88,7 +87,7 @@ namespace xt
         template <class T, class  R>                                               \
         static void run(const ztyped_array<T>& z, ztyped_array<R>& zres)           \
         {                                                                          \
-            detail::zassign_data(zres.get_array(), XOP z.get_array());             \
+            zassign_wrapped_expression(zres.get_array(), XOP z.get_array());       \
         }                                                                          \
         template <class T>                                                         \
         static size_t index(const ztyped_array<T>&)                                \
@@ -107,7 +106,7 @@ namespace xt
                         const ztyped_array<T2>& z2,                                \
                         ztyped_array<R>& zres)                                     \
         {                                                                          \
-            detail::zassign_data(zres.get_array(),                                 \
+            zassign_wrapped_expression(zres.get_array(),                           \
                                  z1.get_array() XOP z2.get_array());               \
         }                                                                          \
         template <class T1, class T2>                                              \
@@ -127,7 +126,7 @@ namespace xt
         static void run(const ztyped_array<T>& z,                                  \
                         ztyped_array<R>& zres)                                     \
         {                                                                          \
-            detail::zassign_data(zres.get_array(), XEXP(z.get_array()));           \
+            zassign_wrapped_expression(zres.get_array(), XEXP(z.get_array()));     \
         }                                                                          \
         template <class T>                                                         \
         static size_t index(const ztyped_array<T>&)                                \
@@ -146,7 +145,7 @@ namespace xt
                         const ztyped_array<T2>& z2,                                \
                         ztyped_array<R>& zres)                                     \
         {                                                                          \
-            detail::zassign_data(zres.get_array(),                                 \
+            zassign_wrapped_expression(zres.get_array(),                           \
                                  XEXP(z1.get_array(), z2.get_array()));            \
         }                                                                          \
         template <class T1, class T2>                                              \
