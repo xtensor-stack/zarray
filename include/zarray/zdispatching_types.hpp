@@ -76,6 +76,9 @@ namespace xt
     using build_unary_identity_t = build_unary_impl_t<T, T>;
 
     template <class T>
+    using build_unary_bool_t = build_unary_impl_t<T, bool>;
+
+    template <class T>
     using build_unary_int32_t = build_unary_impl_t<T, int32_t>;
 
     template <class T>
@@ -94,6 +97,10 @@ namespace xt
                                 mpl::transform_t<build_unary_identity_t, z_float_types>,
                                 mpl::transform_t<build_unary_int32_t, z_small_int_types>
                             >;
+
+    using zunary_bool_func_types = mpl::transform_t<build_unary_bool_t, z_types>;
+
+    using zunary_classify_types = mpl::transform_t<build_unary_bool_t, z_float_types>;
 
     /**************************
      * binary operation types *
@@ -130,6 +137,8 @@ namespace xt
                                  mpl::transform_t<build_binary_identity_t, z_float_types>,
                                  mpl::transform_t<build_binary_int32_t, z_small_int_types>
                              >;
+
+    using zbinary_int_op_types = mpl::transform_t<build_binary_identity_t, z_int_types>;
 
 }
 

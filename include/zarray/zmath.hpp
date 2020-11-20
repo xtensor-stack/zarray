@@ -178,8 +178,8 @@ namespace xt
     XTENSOR_BINARY_ZOPERATOR(zless_equal, <=, detail::less_equal);
     XTENSOR_BINARY_ZOPERATOR(zgreater, >, detail::greater);
     XTENSOR_BINARY_ZOPERATOR(zgreater_equal, >=, detail::greater_equal);
-    XTENSOR_BINARY_ZOPERATOR(zequal_to, ==, detail::equal_to);
-    XTENSOR_BINARY_ZOPERATOR(znot_equal_to, !=, detail::not_equal_to);
+    XTENSOR_BINARY_ZFUNCTOR(zequal_to, xt::equal, detail::equal_to);
+    XTENSOR_BINARY_ZFUNCTOR(znot_equal_to, xt::not_equal, detail::not_equal_to);
 
 
     XTENSOR_UNARY_ZFUNCTOR(zfabs, xt::fabs, math::fabs_fun);
@@ -217,7 +217,7 @@ namespace xt
     XTENSOR_UNARY_ZFUNCTOR(zerfc, xt::erfc, math::erfc_fun);
     XTENSOR_UNARY_ZFUNCTOR(ztgamma, xt::tgamma, math::tgamma_fun);
     XTENSOR_UNARY_ZFUNCTOR(zlgamma, xt::lgamma, math::lgamma_fun);
-    /*XTENSOR_UNARY_ZFUNCTOR(zceil, xt::ceil, math::ceil_fun);
+    XTENSOR_UNARY_ZFUNCTOR(zceil, xt::ceil, math::ceil_fun);
     XTENSOR_UNARY_ZFUNCTOR(zfloor, xt::floor, math::floor_fun);
     XTENSOR_UNARY_ZFUNCTOR(ztrunc, xt::trunc, math::trunc_fun);
     XTENSOR_UNARY_ZFUNCTOR(zround, xt::round, math::round_fun);
@@ -225,7 +225,7 @@ namespace xt
     XTENSOR_UNARY_ZFUNCTOR(zrint, xt::rint, math::rint_fun);
     XTENSOR_UNARY_ZFUNCTOR(zisfinite, xt::isfinite, math::isfinite_fun);
     XTENSOR_UNARY_ZFUNCTOR(zisinf, xt::isinf, math::isinf_fun);
-    XTENSOR_UNARY_ZFUNCTOR(zisnan, xt::isnan, math::isnan_fun);*/
+    XTENSOR_UNARY_ZFUNCTOR(zisnan, xt::isnan, math::isnan_fun);
 
 #undef XTENSOR_BINARY_ZFUNCTOR
 #undef XTENSOR_UNARY_ZFUNCTOR
