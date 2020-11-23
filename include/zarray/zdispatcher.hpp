@@ -214,6 +214,32 @@ namespace xt
             using type = zunary_op_types;
         };
 
+        template <>
+        struct unary_dispatching_types<bitwise_not>
+        {
+            using type = mpl::transform_t<build_unary_identity_t, z_int_types>;
+        };
+
+        // TODO: replace zunary_classify_types with zunary_bool_func_types
+        // when xsimd is fixed
+        template <>
+        struct unary_dispatching_types<xt::math::isfinite_fun>
+        {
+            using type = zunary_classify_types;
+        };
+
+        template <>
+        struct unary_dispatching_types<xt::math::isinf_fun>
+        {
+            using type = zunary_classify_types;
+        };
+
+        template <>
+        struct unary_dispatching_types<xt::math::isnan_fun>
+        {
+            using type = zunary_classify_types;
+        };
+
         template <class F>
         using unary_dispatching_types_t = typename unary_dispatching_types<F>::type;
     }
@@ -304,12 +330,31 @@ namespace xt
             math::fmod_fun
         >;
 
+        using zbinary_int_op_list = mpl::vector
+        <
+            detail::modulus,
+            detail::bitwise_and,
+            detail::bitwise_or,
+            detail::bitwise_xor,
+            detail::bitwise_not,
+            detail::left_shift,
+            detail::right_shift
+        >;
+
         template <class F>
         struct binary_dispatching_types
         {
             using type = std::conditional_t<mpl::contains<zbinary_func_list, F>::value,
                                             zbinary_func_types,
-                                            zbinary_op_types>;
+                                            std::conditional_t<mpl::contains<zbinary_int_op_list, F>::value,
+                                                               zbinary_int_op_types,
+                                                               zbinary_op_types>>;
+        };
+
+        template <>
+        struct binary_dispatching_types<detail::modulus>
+        {
+            using type = zbinary_int_op_types;
         };
 
         template <class F>
@@ -452,22 +497,22 @@ namespace xt
             zdispatcher_t<minus, 2>::init();
             zdispatcher_t<multiplies, 2>::init();
             zdispatcher_t<divides, 2>::init();
-            //zdispatcher_t<modulus, 2>::init();
+            zdispatcher_t<modulus, 2>::init();
             zdispatcher_t<logical_or, 2>::init();
             zdispatcher_t<logical_and, 2>::init();
-            //zdispatcher_t<logical_not, 2>::init();
-            //zdispatcher_t<bitwise_or, 2>::init();
-            //zdispatcher_t<bitwise_and, 2>::init();
-            //zdispatcher_t<bitwise_xor, 2>::init();
-            //zdispatcher_t<bitwise_not, 2>::init();
-            //zdispatcher_t<left_shift, 2>::init();
-            //zdispatcher_t<right_shift, 2>::init();
+            zdispatcher_t<logical_not, 1>::init();
+            zdispatcher_t<bitwise_or, 2>::init();
+            zdispatcher_t<bitwise_and, 2>::init();
+            zdispatcher_t<bitwise_xor, 2>::init();
+            zdispatcher_t<bitwise_not, 1>::init();
+            zdispatcher_t<left_shift, 2>::init();
+            zdispatcher_t<right_shift, 2>::init();
             zdispatcher_t<less, 2>::init();
             zdispatcher_t<less_equal, 2>::init();
             zdispatcher_t<greater, 2>::init();
             zdispatcher_t<greater_equal, 2>::init();
-            //zdispatcher_t<equal_to, 2>::init();
-            //zdispatcher_t<not_equal_to, 2>::init();
+            zdispatcher_t<equal_to, 2>::init();
+            zdispatcher_t<not_equal_to, 2>::init();
         }
     }
 
@@ -509,7 +554,7 @@ namespace xt
             zdispatcher_t<erfc_fun, 1>::init();
             zdispatcher_t<tgamma_fun, 1>::init();
             zdispatcher_t<lgamma_fun, 1>::init();
-            /*zdispatcher_t<ceil_fun, 1>::init();
+            zdispatcher_t<ceil_fun, 1>::init();
             zdispatcher_t<floor_fun, 1>::init();
             zdispatcher_t<trunc_fun, 1>::init();
             zdispatcher_t<round_fun, 1>::init();
@@ -517,7 +562,7 @@ namespace xt
             zdispatcher_t<rint_fun, 1>::init();
             zdispatcher_t<isfinite_fun, 1>::init();
             zdispatcher_t<isinf_fun, 1>::init();
-            zdispatcher_t<isnan_fun, 1>::init();*/
+            zdispatcher_t<isnan_fun, 1>::init();
         }
     }
 
