@@ -1,0 +1,39 @@
+parameters:
+  - name: 'platform'
+    type: string
+
+steps:
+  - script: |
+      conda config --set always_yes yes --set changeps1 no
+      conda update -q conda
+      conda env create --file environment-dev.yml
+    displayName: Install dependencies
+
+  - script: |
+      source activate zarray
+      conda install gxx_linux-64 libgcc -c conda-forge
+    condition: eq('${{ parameters.platform }}', 'Linux')
+    displayName: Install conda-forge compilers
+
+  - script: |
+      source activate zarray
+      export LDFLAGS="${LDFLAGS} -Wl,-rpath,$CONDA_PREFIX/lib"
+      export LINKFLAGS="${LDFLAGS}"
+      mkdir build
+      cd build
+      cmake -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DDOWNLOAD_GTEST=ON -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX $(Build.SourcesDirectory)
+    displayName: Configure zarray
+    workingDirectory: $(Build.BinariesDirectory)
+
+  - script: |
+      source activate zarray
+      make -j2 test_zarray_lib
+    displayName: Build zarray
+    workingDirectory: $(Build.BinariesDirectory)/build
+
+  - script: |
+      source activate zarray
+      ./test_zarray_lib
+    displayName: Test zarray
+    workingDirectory: $(Build.BinariesDirectory)/build/test
+
