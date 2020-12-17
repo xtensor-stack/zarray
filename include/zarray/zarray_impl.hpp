@@ -132,7 +132,7 @@ namespace xt
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
         void resize(shape_type&&) override;
-        void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
+        bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
     private:
 
@@ -338,11 +338,11 @@ namespace xt
     }
 
     template <class CTE>
-    inline void zexpression_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    inline bool zexpression_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
     {
         return m_expression.broadcast_shape(shape, reuse_cache);
     }
-    
+
     template <class CTE>
     inline void zexpression_wrapper<CTE>::compute_cache() const
     {
