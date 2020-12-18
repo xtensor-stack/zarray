@@ -203,6 +203,18 @@ namespace xt
         };
 
         template <>
+        struct unary_dispatching_types<xassign_dummy_functor>
+        {
+            using type = zunary_ident_types;
+        };
+
+        template <>
+        struct unary_dispatching_types<xmove_dummy_functor>
+        {
+            using type = zunary_ident_types;
+        };
+
+        template <>
         struct unary_dispatching_types<negate>
         {
             using type = zunary_op_types;

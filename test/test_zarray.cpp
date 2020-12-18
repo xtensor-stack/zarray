@@ -48,7 +48,7 @@ namespace xt
     {
         zdispatcher_t<detail::xassign_dummy_functor, 1>::init();
         zdispatcher_t<detail::xmove_dummy_functor, 1>::init();
-        
+
         xarray<double> a = {{1., 2.}, {3., 4.}};
         xarray<double> b = {{2., 2.}, {3., 4.}};
         xarray<double> c = a;
@@ -62,6 +62,13 @@ namespace xt
         dc = db;
         EXPECT_EQ(dc.get_array<double>(), b);
         EXPECT_NE(c, b);
+
+        xarray<int> d;
+        xarray<int> e = {0, 1};
+        zarray id(d);
+        zarray ie(e);
+        id = ie;
+        EXPECT_EQ(d, e);
     }
 
     TEST(zarray, move_constructor)
@@ -90,7 +97,7 @@ namespace xt
     {
         zdispatcher_t<detail::xassign_dummy_functor, 1>::init();
         zdispatcher_t<detail::xmove_dummy_functor, 1>::init();
-        
+
         xarray<double> a = {{1., 2.}, {3., 4.}};
         xarray<double> b = {{2., 2.}, {3., 4.}};
         xarray<double> c = a;
@@ -151,7 +158,7 @@ namespace xt
     {
         xarray<double> a = {{1., 2.}, {3., 4.}};
         zarray za(a);
-        
+
         dynamic_shape<size_t> sh = {3u, 4u, 2u};
         za.resize(sh);
         EXPECT_EQ(a.shape(), sh);
@@ -187,5 +194,22 @@ namespace xt
         shape_type res = za.as_chunked_array().chunk_shape();
         EXPECT_EQ(res, chunk_shape);
     }
-}
 
+    TEST(zarray, zarray_assign_xarray)
+    {
+        auto a1 = xarray<int>();
+        auto a2 = xarray<int>({0, 1});
+        zarray z1(a1);
+        z1 = a2;
+        EXPECT_EQ(a1, a2);
+    }
+
+    TEST(zarray, noalias_zarray_assign_xarray)
+    {
+        auto a1 = xarray<int>();
+        auto a2 = xarray<int>({0, 1});
+        zarray z1(a1);
+        noalias(z1) = a2;
+        EXPECT_EQ(a1, a2);
+    }
+}

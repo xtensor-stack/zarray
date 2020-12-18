@@ -87,6 +87,8 @@ namespace xt
     template <class T>
     using build_unary_double_t = build_unary_impl_t<T, double>;
 
+    using zunary_ident_types = mpl::transform_t<build_unary_identity_t, z_types>;
+
     using zunary_func_types = detail::concatenate_t<
                                   mpl::transform_t<build_unary_identity_t, z_float_types>,
                                   mpl::transform_t<build_unary_double_t, z_int_types>

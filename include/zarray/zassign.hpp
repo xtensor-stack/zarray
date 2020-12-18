@@ -15,6 +15,32 @@
 
 namespace xt
 {
+    namespace detail
+    {
+        template <class Tag>
+        struct zexpression_assigner
+        {
+            // Both E1 and E2 are zarray expressions
+            template <class E1, class E2>
+            static void assign_data(E1& e1, const E2& e2)
+            {
+                e2.assign_to(e1.get_implementation());
+            }
+        };
+
+        template <>
+        struct zexpression_assigner<xtensor_expression_tag>
+        {
+            // E1 is a zarray_expression, E2 is an xtensor_expression
+            template <class E1, class E2>
+            static void assign_data(E1& e1, const E2& e2)
+            {
+                using value_type = typename E2::value_type;
+                e1.template get_array<value_type>() = e2;
+            }
+        };
+    }
+
     template <>
     class xexpression_assigner<zarray_expression_tag>
     {
@@ -29,7 +55,7 @@ namespace xt
             auto shape = uninitialized_shape<dynamic_shape<std::size_t>>(size);
             rhs.broadcast_shape(shape, true);
             lhs.resize(std::move(shape));
-            rhs.assign_to(lhs.get_implementation());
+            detail::zexpression_assigner<xexpression_tag_t<E2>>::assign_data(lhs, rhs);
         }
     };
 
