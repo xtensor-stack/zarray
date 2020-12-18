@@ -62,6 +62,13 @@ namespace xt
         dc = db;
         EXPECT_EQ(dc.get_array<double>(), b);
         EXPECT_NE(c, b);
+
+        xarray<int> d;
+        xarray<int> e = {0, 1};
+        zarray id(d);
+        zarray ie(e);
+        id = ie;
+        EXPECT_EQ(d, e);
     }
 
     TEST(zarray, move_constructor)
@@ -197,7 +204,7 @@ namespace xt
         EXPECT_EQ(a1, a2);
     }
 
-    /*TEST(zarray, noalias_zarray_assign_xarray)
+    TEST(zarray, noalias_zarray_assign_xarray)
     {
         auto a1 = xarray<int>();
         auto a2 = xarray<int>({0, 1});
@@ -205,14 +212,4 @@ namespace xt
         noalias(z1) = a2;
         EXPECT_EQ(a1, a2);
     }
-
-    TEST(zarray, zarray_assign_zarray)
-    {
-        auto a1 = xarray<int>();
-        auto a2 = xarray<int>({0, 1});
-        zarray z1(a1);
-        zarray z2(a2);
-        z1 = z2;
-        EXPECT_EQ(a1, a2);
-    }*/
 }
