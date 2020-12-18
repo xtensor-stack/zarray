@@ -182,19 +182,6 @@ namespace xt
         EXPECT_EQ(sh2, res2);
     }
 
-    // TODO: move to dedicated test file
-    TEST(zarray, chunked_array)
-    {
-        using shape_type =  zarray::shape_type;
-        shape_type shape = {10, 10, 10};
-        shape_type chunk_shape = {2, 3, 4};
-        auto a = chunked_array<double>(shape, chunk_shape);
-
-        zarray za(a);
-        shape_type res = za.as_chunked_array().chunk_shape();
-        EXPECT_EQ(res, chunk_shape);
-    }
-
     TEST(zarray, zarray_assign_xarray)
     {
         auto a1 = xarray<int>();
