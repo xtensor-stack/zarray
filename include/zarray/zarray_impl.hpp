@@ -418,6 +418,35 @@ namespace xt
      * zarray_wrapper *
      ******************/
 
+    namespace detail
+    {
+        template <class T>
+        struct zarray_wrapper_helper
+        {
+            static inline xarray<T>& get_array(xarray<T>& ar)
+            {
+                return ar;
+            }
+
+            static inline xarray<T>& get_array(const xarray<T>&)
+            {
+                throw std::runtime_error("Cannot return non const array from const array");
+            }
+
+            template <class S>
+            static inline void resize(xarray<T>& ar, S&& shape)
+            {
+                ar.resize(std::forward<S>(shape));
+            }
+
+            template <class S>
+            static inline void resize(const xarray<T>&, S&&)
+            {
+                throw std::runtime_error("Cannot resize const array");
+            }
+        };
+    }
+
     template <class CTE>
     template <class E>
     inline zarray_wrapper<CTE>::zarray_wrapper(E&& e)
@@ -429,7 +458,7 @@ namespace xt
     template <class CTE>
     inline auto zarray_wrapper<CTE>::get_array() -> xarray<value_type>&
     {
-        return m_array;
+        return detail::zarray_wrapper_helper<value_type>::get_array(m_array);
     }
 
     template <class CTE>
@@ -459,13 +488,13 @@ namespace xt
     template <class CTE>
     inline void zarray_wrapper<CTE>::resize(const shape_type& shape)
     {
-        m_array.resize(shape);
+        detail::zarray_wrapper_helper<value_type>::resize(m_array, shape);
     }
 
     template <class CTE>
     inline void zarray_wrapper<CTE>::resize(shape_type&& shape)
     {
-        m_array.resize(std::move(shape));
+        detail::zarray_wrapper_helper<value_type>::resize(m_array, std::move(shape));
     }
 
     template <class CTE>
