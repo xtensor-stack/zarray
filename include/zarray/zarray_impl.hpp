@@ -69,7 +69,7 @@ namespace xt
         virtual const shape_type& shape() const = 0;
         virtual void resize(const shape_type& shape) = 0;
         virtual void resize(shape_type&& shape) = 0;
-        virtual void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const = 0;
+        virtual bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const = 0;
 
         XTL_IMPLEMENT_INDEXABLE_CLASS()
 
@@ -175,7 +175,7 @@ namespace xt
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
         void resize(shape_type&&) override;
-        void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
+        bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
     private:
 
@@ -213,7 +213,7 @@ namespace xt
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
         void resize(shape_type&&) override;
-        void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
+        bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
     private:
 
@@ -261,7 +261,7 @@ namespace xt
         const shape_type& shape() const override;
         void resize(const shape_type& shape) override;
         void resize(shape_type&&) override;
-        void broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
+        bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
         const shape_type& chunk_shape() const override;
 
@@ -409,11 +409,11 @@ namespace xt
     }
 
     template <class CTE>
-    inline void zscalar_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    inline bool zscalar_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
     {
-        m_array.broadcast_shape(shape, reuse_cache);
+        return m_array.broadcast_shape(shape, reuse_cache);
     }
-    
+
     /******************
      * zarray_wrapper *
      ******************/
@@ -498,11 +498,11 @@ namespace xt
     }
 
     template <class CTE>
-    inline void zarray_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    inline bool zarray_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
     {
-        m_array.broadcast_shape(shape, reuse_cache);
+        return m_array.broadcast_shape(shape, reuse_cache);
     }
-    
+
     /********************
      * zchunked_wrapper *
      ********************/
@@ -566,13 +566,13 @@ namespace xt
         //TODO: check this semantic
         throw std::runtime_error("Cannot resize chunked wrapper");
     }
-    
+
     template <class CTE>
-    inline void zchunked_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    inline bool zchunked_wrapper<CTE>::broadcast_shape(shape_type& shape, bool reuse_cache) const
     {
-        m_chunked_array.broadcast_shape(shape, reuse_cache);
+        return m_chunked_array.broadcast_shape(shape, reuse_cache);
     }
-    
+
     template <class CTE>
     inline auto zchunked_wrapper<CTE>::chunk_shape() const -> const shape_type&
     {
