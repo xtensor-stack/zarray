@@ -12,6 +12,7 @@
 
 #include <xtl/xmultimethods.hpp>
 
+#include "xtensor/xstrided_view.hpp"
 #include "zdispatching_types.hpp"
 #include "zmath.hpp"
 
@@ -38,6 +39,50 @@ namespace xt
         xtl::static_caster,
         xtl::basic_fast_dispatcher
     >;
+
+    /********************
+     * zview_dispatcher *
+     ********************/
+
+    // The view dispatcher dispatches on the single argument and forwards a
+    // single undispatched argument (the slices).
+
+    template <class F>
+    class zview_dispatcher
+    {
+    public:
+
+        template <class T>
+        static void insert();
+
+        template <class T, class... U>
+        static void register_dispatching(mpl::vector<mpl::vector<T, T>, U...>);
+
+        static void init();
+        template <class V>
+        static void dispatch(const zarray_impl& z1, zarray_impl& res, V& udarg);
+        static size_t get_type_index(const zarray_impl& z1);
+
+    private:
+
+        static zview_dispatcher& instance();
+
+        zview_dispatcher();
+        ~zview_dispatcher() = default;
+
+        template <class T>
+        void insert_impl();
+
+        template <class T, class...U>
+        inline void register_dispatching_impl(mpl::vector<mpl::vector<T, T>, U...>);
+        inline void register_dispatching_impl(mpl::vector<>);
+
+        using zfunctor_type = get_zmapped_functor_t<F>;
+        using zrun_dispatcher = zrun_dispatcher_impl<mpl::vector<const zarray_impl, zarray_impl>, mpl::vector<const detail::strided_view_args<detail::no_adj_strides_policy>>>;
+
+        zrun_dispatcher m_run_dispatcher;
+    };
+
 
     /**********************
      * zdouble_dispatcher *
@@ -79,7 +124,7 @@ namespace xt
         using zfunctor_type = get_zmapped_functor_t<F>;
         using ztype_dispatcher = ztype_dispatcher_impl<mpl::vector<const zarray_impl>>;
         using zrun_dispatcher = zrun_dispatcher_impl<mpl::vector<const zarray_impl, zarray_impl>>;
-        
+
         ztype_dispatcher m_type_dispatcher;
         zrun_dispatcher m_run_dispatcher;
     };
@@ -124,7 +169,7 @@ namespace xt
         using zfunctor_type = get_zmapped_functor_t<F>;
         using ztype_dispatcher = ztype_dispatcher_impl<mpl::vector<const zarray_impl, const zarray_impl>>;
         using zrun_dispatcher = zrun_dispatcher_impl<mpl::vector<const zarray_impl, const zarray_impl, zarray_impl>>;
-        
+
         ztype_dispatcher m_type_dispatcher;
         zrun_dispatcher m_run_dispatcher;
     };
@@ -133,8 +178,14 @@ namespace xt
      * zdispatcher *
      ***************/
 
-    template <class F, size_t N>
+    template <class F, size_t N, size_t M = 0>
     struct zdispatcher;
+
+    template <class F>
+    struct zdispatcher<F, 1, 1>
+    {
+        using type = zview_dispatcher<F>;
+    };
 
     template <class F>
     struct zdispatcher<F, 1>
@@ -148,8 +199,8 @@ namespace xt
         using type = ztriple_dispatcher<F>;
     };
 
-    template <class F, size_t N>
-    using zdispatcher_t = typename zdispatcher<F, N>::type;
+    template <class F, size_t N, size_t M = 0>
+    using zdispatcher_t = typename zdispatcher<F, N, M>::type;
 
     /************************
      * zarray_impl_register *
@@ -185,16 +236,12 @@ namespace xt
 
     // Early initialization of all dispatchers
     // and zarray_impl_register
-    // return int so it can be assigned to a 
+    // return int so it can be assigned to a
     // static variable and be automatically
     // called when loading a shared library
     // for instance.
 
     int init_zsystem();
-
-    /*************************************
-     * zdouble_dispatcher implementation *
-     *************************************/
 
     namespace detail
     {
@@ -202,6 +249,12 @@ namespace xt
         struct unary_dispatching_types
         {
             using type = zunary_func_types;
+        };
+
+        template <>
+        struct unary_dispatching_types<xview_dummy_functor>
+        {
+            using type = zunary_ident_types;
         };
 
         template <>
@@ -258,13 +311,89 @@ namespace xt
         using unary_dispatching_types_t = typename unary_dispatching_types<F>::type;
     }
 
+    /***********************************
+     * zview_dispatcher implementation *
+     ***********************************/
+
+    template <class F>
+    template <class T>
+    inline void zview_dispatcher<F>::insert()
+    {
+        instance().template insert_impl<T>();
+    }
+
+    template <class F>
+    template <class T, class... U>
+    inline void zview_dispatcher<F>::register_dispatching(mpl::vector<mpl::vector<T, T>, U...>)
+    {
+        instance().register_dispatching_impl(mpl::vector<mpl::vector<T, T>, U...>());
+    }
+
+    template <class F>
+    inline void zview_dispatcher<F>::init()
+    {
+        instance();
+    }
+
+    template <class F>
+    template <class V>
+    inline void zview_dispatcher<F>::dispatch(const zarray_impl& z1, zarray_impl& z2, V& udarg)
+    {
+        instance().m_run_dispatcher.dispatch(z1, z2, udarg);
+    }
+
+    template <class F>
+    inline size_t zview_dispatcher<F>::get_type_index(const zarray_impl& z1)
+    {
+        return z1.get_class_index();
+    }
+
+    template <class F>
+    inline zview_dispatcher<F>& zview_dispatcher<F>::instance()
+    {
+        static zview_dispatcher<F> inst;
+        return inst;
+    }
+
+    template <class F>
+    inline zview_dispatcher<F>::zview_dispatcher()
+    {
+        register_dispatching_impl(detail::unary_dispatching_types_t<F>());
+    }
+
+    template <class F>
+    template <class T>
+    inline void zview_dispatcher<F>::insert_impl()
+    {
+        using arg_type = const ztyped_array<T>;
+        using res_type = ztyped_array<T>;
+        m_run_dispatcher.template insert<arg_type, res_type>(&zfunctor_type::template run<T>);
+    }
+
+    template <class F>
+    template <class T, class...U>
+    inline void zview_dispatcher<F>::register_dispatching_impl(mpl::vector<mpl::vector<T, T>, U...>)
+    {
+        insert_impl<T>();
+        register_dispatching_impl(mpl::vector<U...>());
+    }
+
+    template <class F>
+    inline void zview_dispatcher<F>::register_dispatching_impl(mpl::vector<>)
+    {
+    }
+
+    /*************************************
+     * zdouble_dispatcher implementation *
+     *************************************/
+
     template <class F>
     template <class T, class R>
     inline void zdouble_dispatcher<F>::insert()
     {
         instance().template insert_impl<T, R>();
     }
-    
+
     template <class F>
     template <class T, class R, class... U>
     inline void zdouble_dispatcher<F>::register_dispatching(mpl::vector<mpl::vector<T, R>, U...>)
@@ -283,7 +412,7 @@ namespace xt
     {
         instance().m_run_dispatcher.dispatch(z1, res);
     }
-    
+
     template <class F>
     inline size_t zdouble_dispatcher<F>::get_type_index(const zarray_impl& z1)
     {
@@ -325,7 +454,7 @@ namespace xt
     inline void zdouble_dispatcher<F>::register_dispatching_impl(mpl::vector<>)
     {
     }
-    
+
     /*************************************
      * ztriple_dispatcher implementation *
      *************************************/
@@ -381,7 +510,7 @@ namespace xt
     {
         instance().template insert_impl<T1, T2, R>();
     }
-    
+
     template <class F>
     template <class T1, class T2, class R, class... U>
     inline void ztriple_dispatcher<F>::register_dispatching(mpl::vector<mpl::vector<T1, T2, R>, U...>)
@@ -400,7 +529,7 @@ namespace xt
     {
         instance().m_run_dispatcher.dispatch(z1, z2, res);
     }
-    
+
     template <class F>
     inline size_t ztriple_dispatcher<F>::get_type_index(const zarray_impl& z1, const zarray_impl& z2)
     {
@@ -444,7 +573,7 @@ namespace xt
     inline void ztriple_dispatcher<F>::register_dispatching_impl(mpl::vector<>)
     {
     }
-    
+
     /***************************************
      * zarray_impl_register implementation *
      ***************************************/
@@ -470,14 +599,14 @@ namespace xt
         static zarray_impl_register r;
         return r;
     }
-        
+
     inline zarray_impl_register::zarray_impl_register()
         : m_next_index(0)
     {
         insert_impl<float>();
         insert_impl<double>();
     }
-    
+
     template <class T>
     inline void zarray_impl_register::insert_impl()
     {
@@ -503,6 +632,7 @@ namespace xt
     {
         inline void init_zdispatchers()
         {
+            zdispatcher_t<xview_dummy_functor, 1, 1>::init();
             zdispatcher_t<xassign_dummy_functor, 1>::init();
             zdispatcher_t<xmove_dummy_functor, 1>::init();
             zdispatcher_t<identity, 1>::init();

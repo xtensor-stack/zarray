@@ -65,6 +65,9 @@ namespace xt
 
         virtual self_type* clone() const = 0;
 
+        virtual const dynamic_shape<std::ptrdiff_t>& get_strides() const = 0;
+        virtual std::size_t get_offset() const = 0;
+        virtual layout_type layout() const = 0;
         virtual std::size_t dimension() const = 0;
         virtual const shape_type& shape() const = 0;
         virtual void resize(const shape_type& shape) = 0;
@@ -128,6 +131,9 @@ namespace xt
 
         self_type* clone() const override;
 
+        const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
+        std::size_t get_offset() const override;
+        layout_type layout() const override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
@@ -171,6 +177,9 @@ namespace xt
 
         self_type* clone() const override;
 
+        const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
+        std::size_t get_offset() const override;
+        layout_type layout() const override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
@@ -209,6 +218,9 @@ namespace xt
 
         self_type* clone() const override;
 
+        const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
+        std::size_t get_offset() const override;
+        layout_type layout() const override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
@@ -257,6 +269,9 @@ namespace xt
 
         self_type* clone() const override;
 
+        const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
+        std::size_t get_offset() const override;
+        layout_type layout() const override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type& shape) override;
@@ -275,13 +290,15 @@ namespace xt
         shape_type m_chunk_shape;
         mutable xarray<value_type> m_cache;
         mutable bool m_cache_initialized;
+        mutable dynamic_shape<std::ptrdiff_t> m_strides;
+        mutable bool m_strides_initialized;
 
     };
 
     /***********************
      * zexpression_wrapper *
      ***********************/
-        
+
     template <class CTE>
     template <class E>
     inline zexpression_wrapper<CTE>::zexpression_wrapper(E&& e)
@@ -310,6 +327,27 @@ namespace xt
     inline auto zexpression_wrapper<CTE>::clone() const -> self_type*
     {
         return new self_type(*this);
+    }
+
+    template <class CTE>
+    inline auto zexpression_wrapper<CTE>::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
+    {
+        compute_cache();
+        return m_cache.get_strides();
+    }
+
+    template <class CTE>
+    inline std::size_t zexpression_wrapper<CTE>::get_offset() const
+    {
+        compute_cache();
+        return m_cache.get_offset();
+    }
+
+    template <class CTE>
+    inline layout_type zexpression_wrapper<CTE>::layout() const
+    {
+        compute_cache();
+        return m_cache.layout();
     }
 
     template <class CTE>
@@ -383,7 +421,25 @@ namespace xt
     {
         return new self_type(*this);
     }
-    
+
+    template <class CTE>
+    inline auto zscalar_wrapper<CTE>::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
+    {
+        return m_array.strides();
+    }
+
+    template <class CTE>
+    inline std::size_t zscalar_wrapper<CTE>::get_offset() const
+    {
+        return 0;
+    }
+
+    template <class CTE>
+    inline layout_type zscalar_wrapper<CTE>::layout() const
+    {
+        return m_array.layout();
+    }
+
     template <class CTE>
     inline std::size_t zscalar_wrapper<CTE>::dimension() const
     {
@@ -474,6 +530,24 @@ namespace xt
     }
 
     template <class CTE>
+    inline auto zarray_wrapper<CTE>::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
+    {
+        return m_array.strides();
+    }
+
+    template <class CTE>
+    inline std::size_t zarray_wrapper<CTE>::get_offset() const
+    {
+        return 0;
+    }
+
+    template <class CTE>
+    inline layout_type zarray_wrapper<CTE>::layout() const
+    {
+        return m_array.layout();
+    }
+
+    template <class CTE>
     inline std::size_t zarray_wrapper<CTE>::dimension() const
     {
         return m_array.dimension();
@@ -515,6 +589,7 @@ namespace xt
         , m_chunk_shape(m_chunked_array.chunk_shape().size())
         , m_cache()
         , m_cache_initialized(false)
+        , m_strides_initialized(false)
     {
         std::copy(m_chunked_array.chunk_shape().begin(),
                   m_chunked_array.chunk_shape().end(),
@@ -539,6 +614,29 @@ namespace xt
     inline auto zchunked_wrapper<CTE>::clone() const -> self_type*
     {
         return new self_type(*this);
+    }
+
+    template <class CTE>
+    inline auto zchunked_wrapper<CTE>::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
+    {
+        if (!m_strides_initialized)
+        {
+            m_strides = detail::get_strides<XTENSOR_DEFAULT_TRAVERSAL>(m_chunked_array);
+            m_strides_initialized = true;
+        }
+        return m_strides;
+    }
+
+    template <class CTE>
+    inline std::size_t zchunked_wrapper<CTE>::get_offset() const
+    {
+        return 0;
+    }
+
+    template <class CTE>
+    inline layout_type zchunked_wrapper<CTE>::layout() const
+    {
+        return m_chunked_array.layout();
     }
 
     template <class CTE>

@@ -77,6 +77,7 @@ set(ZARRAY_HEADERS
     ${ZARRAY_INCLUDE_DIR}/zarray/zdispatcher.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zdispatching_types.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zfunction.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zview.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zmath.hpp
 )
 

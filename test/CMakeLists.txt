@@ -153,7 +153,8 @@ include_directories(${GTEST_INCLUDE_DIRS} SYSTEM)
 
 set(ZARRAY_TESTS
     test_zarray.cpp
-    test_zfunction.cpp)
+    test_zfunction.cpp
+    test_zview.cpp)
 
 add_executable(test_zarray_lib ${COMMON_BASE} ${ZARRAY_TESTS})
 if(XTENSOR_USE_XSIMD)

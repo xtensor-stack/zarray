@@ -4,4 +4,5 @@ channels:
 dependencies:
   - cmake
   - xtensor=0.22.0
+  - xtensor-io=0.11.0
   - xsimd=7.4.8
