@@ -19,20 +19,22 @@ namespace xt
 {
     namespace mpl = xtl::mpl;
 
-    template <class type_list>
+    template <class type_list, class undispatched_type_list = mpl::vector<>>
     using zrun_dispatcher_impl = xtl::functor_dispatcher
     <
         type_list,
         void,
+        undispatched_type_list,
         xtl::static_caster,
         xtl::basic_fast_dispatcher
     >;
 
-    template <class type_list>
+    template <class type_list, class undispatched_type_list = mpl::vector<>>
     using ztype_dispatcher_impl = xtl::functor_dispatcher
     <
         type_list,
         size_t,
+        undispatched_type_list,
         xtl::static_caster,
         xtl::basic_fast_dispatcher
     >;
