@@ -12,9 +12,10 @@
 
 #include <memory>
 
+#include <nlohmann/json.hpp>
 #include <xtl/xmultimethods.hpp>
+#include <xtensor/xarray.hpp>
 
-#include "xtensor/xarray.hpp"
 #include "zarray_impl.hpp"
 #include "zassign.hpp"
 #include "zfunction.hpp"
@@ -65,7 +66,7 @@ namespace xt
 
         template <class E>
         zarray(xexpression<E>&& e);
-        
+
         template <class E>
         zarray& operator=(const xexpression<E>&);
 
@@ -89,6 +90,8 @@ namespace xt
         void broadcast_shape(shape_type& shape, bool reuse_cache = false) const;
 
         const zchunked_array& as_chunked_array() const;
+
+        const nlohmann::json& attrs() const;
 
     private:
 
@@ -175,7 +178,7 @@ namespace xt
     {
         return semantic_base::operator=(e);
     }
-    
+
     inline void zarray::swap(zarray& rhs)
     {
         std::swap(p_impl, rhs.p_impl);
@@ -246,6 +249,11 @@ namespace xt
     inline zview<const zarray&> make_strided_view(const zarray& z, xstrided_slice_vector& slices)
     {
         return zview<const zarray&>(z, slices);
+    }
+
+    inline const nlohmann::json& zarray::attrs() const
+    {
+        return p_impl->attrs();
     }
 }
 

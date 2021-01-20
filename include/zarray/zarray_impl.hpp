@@ -10,14 +10,123 @@
 #ifndef XTENSOR_ZARRAY_IMPL_HPP
 #define XTENSOR_ZARRAY_IMPL_HPP
 
-#include "xtensor/xarray.hpp"
-#include "xtensor/xchunked_array.hpp"
-#include "xtensor/xnoalias.hpp"
-#include "xtensor/xscalar.hpp"
-#include "xtensor/xshape.hpp"
+#include <xtl/xplatform.hpp>
+#include <xtl/xhalf_float.hpp>
+#include <xtensor/xarray.hpp>
+#include <xtensor/xchunked_array.hpp>
+#include <xtensor/xnoalias.hpp>
+#include <xtensor/xscalar.hpp>
+#include <xtensor/xshape.hpp>
 
 namespace xt
 {
+    const std::string endianness_string = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
+
+    // SFINAE test
+    template <typename T>
+    class HasAttrs
+    {
+    private:
+        typedef char YesType[1];
+        typedef char NoType[2];
+
+        template <typename C> static YesType& test( decltype(&C::attrs) ) ;
+        template <typename C> static NoType& test(...);
+
+    public:
+        enum { value = sizeof(test<T>(0)) == sizeof(YesType) };
+    };
+
+    template <class T>
+    typename std::enable_if<HasAttrs<T>::value, const nlohmann::json&>::type
+    get_attrs(T& t, nlohmann::json& attrs)
+    {
+        return t.attrs();
+    }
+
+    template <class T>
+    typename std::enable_if<!HasAttrs<T>::value, const nlohmann::json&>::type
+    get_attrs(T& t, nlohmann::json& attrs)
+    {
+        return attrs;
+    }
+
+    template <class T>
+    inline void set_data_type(nlohmann::json& attrs)
+    {
+    }
+
+    template <>
+    inline void set_data_type<bool>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = "bool";
+    }
+
+    template <>
+    inline void set_data_type<uint8_t>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = "u1";
+    }
+
+    template <>
+    inline void set_data_type<int8_t>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = "i1";
+    }
+
+    template <>
+    inline void set_data_type<int16_t>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = endianness_string + "i2";
+    }
+
+    template <>
+    inline void set_data_type<uint16_t>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = endianness_string + "u2";
+    }
+
+    template <>
+    inline void set_data_type<int32_t>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = endianness_string + "i4";
+    }
+
+    template <>
+    inline void set_data_type<uint32_t>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = endianness_string + "u4";
+    }
+
+    template <>
+    inline void set_data_type<int64_t>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = endianness_string + "i8";
+    }
+
+    template <>
+    inline void set_data_type<uint64_t>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = endianness_string + "u8";
+    }
+
+    template <>
+    inline void set_data_type<xtl::half_float>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = endianness_string + "f2";
+    }
+
+    template <>
+    inline void set_data_type<float>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = endianness_string + "f4";
+    }
+
+    template <>
+    inline void set_data_type<double>(nlohmann::json& attrs)
+    {
+        attrs["data_type"] = endianness_string + "f8";
+    }
 
     /*************************
      * zarray_expression_tag *
@@ -68,6 +177,8 @@ namespace xt
         virtual const dynamic_shape<std::ptrdiff_t>& get_strides() const = 0;
         virtual std::size_t get_offset() const = 0;
         virtual layout_type layout() const = 0;
+
+        virtual const nlohmann::json& attrs() const = 0;
         virtual std::size_t dimension() const = 0;
         virtual const shape_type& shape() const = 0;
         virtual void resize(const shape_type& shape) = 0;
@@ -134,6 +245,8 @@ namespace xt
         const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
         std::size_t get_offset() const override;
         layout_type layout() const override;
+
+        const nlohmann::json& attrs() const override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
@@ -149,6 +262,7 @@ namespace xt
         CTE m_expression;
         mutable xarray<value_type> m_cache;
         mutable bool m_cache_initialized;
+        mutable nlohmann::json m_attrs;
     };
 
     /*******************
@@ -180,6 +294,8 @@ namespace xt
         const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
         std::size_t get_offset() const override;
         layout_type layout() const override;
+
+        const nlohmann::json& attrs() const override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
@@ -192,6 +308,7 @@ namespace xt
 
         CTE m_expression;
         xarray<value_type> m_array;
+        mutable nlohmann::json m_attrs;
     };
 
     /******************
@@ -221,6 +338,8 @@ namespace xt
         const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
         std::size_t get_offset() const override;
         layout_type layout() const override;
+
+        const nlohmann::json& attrs() const override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
@@ -232,6 +351,7 @@ namespace xt
         zarray_wrapper(const zarray_wrapper&) = default;
 
         CTE m_array;
+        mutable nlohmann::json m_attrs;
     };
 
     /********************
@@ -272,6 +392,8 @@ namespace xt
         const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
         std::size_t get_offset() const override;
         layout_type layout() const override;
+
+        const nlohmann::json& attrs() const override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type& shape) override;
@@ -293,6 +415,8 @@ namespace xt
         mutable dynamic_shape<std::ptrdiff_t> m_strides;
         mutable bool m_strides_initialized;
 
+        mutable nlohmann::json m_attrs;
+
     };
 
     /***********************
@@ -307,6 +431,7 @@ namespace xt
         , m_cache()
         , m_cache_initialized(false)
     {
+        set_data_type<value_type>(m_attrs);
     }
 
     template <class CTE>
@@ -348,6 +473,11 @@ namespace xt
     {
         compute_cache();
         return m_cache.layout();
+    }
+
+    inline auto zexpression_wrapper<CTE>::attrs() const -> const nlohmann::json&
+    {
+        return get_attrs(m_expression, m_attrs);
     }
 
     template <class CTE>
@@ -402,6 +532,7 @@ namespace xt
         , m_expression(std::forward<E>(e))
         , m_array(m_expression())
     {
+        set_data_type<value_type>(m_attrs);
     }
 
     template <class CTE>
@@ -438,6 +569,12 @@ namespace xt
     inline layout_type zscalar_wrapper<CTE>::layout() const
     {
         return m_array.layout();
+    }
+
+    template <class CTE>
+    inline auto zscalar_wrapper<CTE>::attrs() const -> const nlohmann::json&
+    {
+        return get_attrs(m_array, m_attrs);
     }
 
     template <class CTE>
@@ -509,6 +646,7 @@ namespace xt
         : base_type()
         , m_array(std::forward<E>(e))
     {
+        set_data_type<value_type>(m_attrs);
     }
 
     template <class CTE>
@@ -545,6 +683,11 @@ namespace xt
     inline layout_type zarray_wrapper<CTE>::layout() const
     {
         return m_array.layout();
+    }
+
+    inline auto zarray_wrapper<CTE>::attrs() const -> const nlohmann::json&
+    {
+        return get_attrs(m_array, m_attrs);
     }
 
     template <class CTE>
@@ -594,6 +737,7 @@ namespace xt
         std::copy(m_chunked_array.chunk_shape().begin(),
                   m_chunked_array.chunk_shape().end(),
                   m_chunk_shape.begin());
+        set_data_type<value_type>(m_attrs);
     }
 
     template <class CTE>
@@ -637,6 +781,11 @@ namespace xt
     inline layout_type zchunked_wrapper<CTE>::layout() const
     {
         return m_chunked_array.layout();
+    }
+
+    inline auto zchunked_wrapper<CTE>::attrs() const -> const nlohmann::json&
+    {
+        return get_attrs(m_chunked_array, m_attrs);
     }
 
     template <class CTE>

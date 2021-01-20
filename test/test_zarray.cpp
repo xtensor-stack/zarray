@@ -7,11 +7,41 @@
 * The full license is in the file LICENSE, distributed with this software. *
 ****************************************************************************/
 
-#include "gtest/gtest.h"
-#include "zarray/zarray.hpp"
+#include <gtest/gtest.h>
+#include <zarray/zarray.hpp>
+#include <xtl/xplatform.hpp>
+#include <xtl/xhalf_float.hpp>
 
 namespace xt
 {
+    template <class T>
+    void check_xarray_data_type(const std::string& data_type)
+    {
+        auto a = xarray<T>();
+        zarray z(a);
+        EXPECT_EQ(z.attrs()["data_type"], data_type);
+    }
+
+    class xattrs
+    {
+    public:
+        const nlohmann::json& attrs();
+        void set_attrs(const nlohmann::json& attrs);
+
+    private:
+        nlohmann::json m_attrs;
+    };
+
+    inline const nlohmann::json& xattrs::attrs()
+    {
+        return m_attrs;
+    }
+
+    inline void xattrs::set_attrs(const nlohmann::json& attrs)
+    {
+        m_attrs = attrs;
+    }
+
     TEST(zarray, constructor)
     {
         xarray<double> a = {{1., 2.}, {3., 4.}};
@@ -211,5 +241,46 @@ namespace xt
         zarray z1(a1);
         noalias(z1) = a2;
         EXPECT_EQ(a1, a2);
+    }
+
+    TEST(zarray, xarray_data_type)
+    {
+        std::string s = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
+        check_xarray_data_type<bool>("bool");
+        check_xarray_data_type<uint8_t>("u1");
+        check_xarray_data_type<uint16_t>(s + "u2");
+        check_xarray_data_type<uint32_t>(s + "u4");
+        check_xarray_data_type<uint64_t>(s + "u8");
+        check_xarray_data_type<int8_t>("i1");
+        check_xarray_data_type<int16_t>(s + "i2");
+        check_xarray_data_type<int32_t>(s + "i4");
+        check_xarray_data_type<int64_t>(s + "i8");
+        check_xarray_data_type<xtl::half_float>(s + "f2");
+        check_xarray_data_type<float>(s + "f4");
+        check_xarray_data_type<double>(s + "f8");
+    }
+
+    TEST(zarray, chunked_array_attrs)
+    {
+        using shape_type =  zarray::shape_type;
+        shape_type shape = {4, 4};
+        shape_type chunk_shape = {2, 2};
+        auto a = chunked_array<double, XTENSOR_DEFAULT_LAYOUT, xattrs>(shape, chunk_shape);
+        nlohmann::json attrs;
+        attrs["foo"] = "bar";
+        a.set_attrs(attrs);
+        zarray z(a);
+        EXPECT_EQ(z.attrs()["foo"], "bar");
+    }
+
+    TEST(zarray, chunked_array_noattrs)
+    {
+        std::string s = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
+        using shape_type =  zarray::shape_type;
+        shape_type shape = {4, 4};
+        shape_type chunk_shape = {2, 2};
+        auto a = chunked_array<double>(shape, chunk_shape);
+        zarray z(a);
+        EXPECT_EQ(z.attrs()["data_type"], s + "f8");
     }
 }
