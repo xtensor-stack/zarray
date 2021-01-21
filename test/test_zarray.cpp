@@ -19,27 +19,7 @@ namespace xt
     {
         auto a = xarray<T>();
         zarray z(a);
-        EXPECT_EQ(z.attrs()["data_type"], data_type);
-    }
-
-    class xattrs
-    {
-    public:
-        const nlohmann::json& attrs();
-        void set_attrs(const nlohmann::json& attrs);
-
-    private:
-        nlohmann::json m_attrs;
-    };
-
-    inline const nlohmann::json& xattrs::attrs()
-    {
-        return m_attrs;
-    }
-
-    inline void xattrs::set_attrs(const nlohmann::json& attrs)
-    {
-        m_attrs = attrs;
+        EXPECT_EQ(z.get_metadata()["data_type"], data_type);
     }
 
     TEST(zarray, constructor)
@@ -243,7 +223,7 @@ namespace xt
         EXPECT_EQ(a1, a2);
     }
 
-    TEST(zarray, xarray_data_type)
+    TEST(zarray, data_type)
     {
         std::string s = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
         check_xarray_data_type<bool>("bool");
@@ -260,27 +240,16 @@ namespace xt
         check_xarray_data_type<double>(s + "f8");
     }
 
-    TEST(zarray, chunked_array_attrs)
+    TEST(zarray, custom_metadata)
     {
         using shape_type =  zarray::shape_type;
         shape_type shape = {4, 4};
         shape_type chunk_shape = {2, 2};
-        auto a = chunked_array<double, XTENSOR_DEFAULT_LAYOUT, xattrs>(shape, chunk_shape);
-        nlohmann::json attrs;
-        attrs["foo"] = "bar";
-        a.set_attrs(attrs);
+        auto a = chunked_array<double, XTENSOR_DEFAULT_LAYOUT>(shape, chunk_shape);
         zarray z(a);
-        EXPECT_EQ(z.attrs()["foo"], "bar");
-    }
-
-    TEST(zarray, chunked_array_noattrs)
-    {
-        std::string s = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
-        using shape_type =  zarray::shape_type;
-        shape_type shape = {4, 4};
-        shape_type chunk_shape = {2, 2};
-        auto a = chunked_array<double>(shape, chunk_shape);
-        zarray z(a);
-        EXPECT_EQ(z.attrs()["data_type"], s + "f8");
+        nlohmann::json metadata;
+        metadata["foo"] = "bar";
+        z.set_metadata(metadata);
+        EXPECT_EQ(z.get_metadata()["foo"], "bar");
     }
 }

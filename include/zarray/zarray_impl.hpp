@@ -22,106 +22,81 @@ namespace xt
 {
     const std::string endianness_string = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
 
-    template <class T, class = void>
-    struct has_attrs : std::false_type
-    {
-    };
-
     template <class T>
-    struct has_attrs<T, void_t<decltype(std::declval<T>().attrs())>>
-        : std::true_type
-    {
-    };
-
-    template <class T>
-    typename std::enable_if<has_attrs<T>::value, const nlohmann::json&>::type
-    get_attrs(T& t, const nlohmann::json& attrs)
-    {
-        return t.attrs();
-    }
-
-    template <class T>
-    typename std::enable_if<!has_attrs<T>::value, const nlohmann::json&>::type
-    get_attrs(T& t, const nlohmann::json& attrs)
-    {
-        return attrs;
-    }
-
-    template <class T>
-    inline void set_data_type(nlohmann::json& attrs)
+    inline void set_data_type(nlohmann::json& metadata)
     {
     }
 
     template <>
-    inline void set_data_type<bool>(nlohmann::json& attrs)
+    inline void set_data_type<bool>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = "bool";
+        metadata["data_type"] = "bool";
     }
 
     template <>
-    inline void set_data_type<uint8_t>(nlohmann::json& attrs)
+    inline void set_data_type<uint8_t>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = "u1";
+        metadata["data_type"] = "u1";
     }
 
     template <>
-    inline void set_data_type<int8_t>(nlohmann::json& attrs)
+    inline void set_data_type<int8_t>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = "i1";
+        metadata["data_type"] = "i1";
     }
 
     template <>
-    inline void set_data_type<int16_t>(nlohmann::json& attrs)
+    inline void set_data_type<int16_t>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = endianness_string + "i2";
+        metadata["data_type"] = endianness_string + "i2";
     }
 
     template <>
-    inline void set_data_type<uint16_t>(nlohmann::json& attrs)
+    inline void set_data_type<uint16_t>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = endianness_string + "u2";
+        metadata["data_type"] = endianness_string + "u2";
     }
 
     template <>
-    inline void set_data_type<int32_t>(nlohmann::json& attrs)
+    inline void set_data_type<int32_t>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = endianness_string + "i4";
+        metadata["data_type"] = endianness_string + "i4";
     }
 
     template <>
-    inline void set_data_type<uint32_t>(nlohmann::json& attrs)
+    inline void set_data_type<uint32_t>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = endianness_string + "u4";
+        metadata["data_type"] = endianness_string + "u4";
     }
 
     template <>
-    inline void set_data_type<int64_t>(nlohmann::json& attrs)
+    inline void set_data_type<int64_t>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = endianness_string + "i8";
+        metadata["data_type"] = endianness_string + "i8";
     }
 
     template <>
-    inline void set_data_type<uint64_t>(nlohmann::json& attrs)
+    inline void set_data_type<uint64_t>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = endianness_string + "u8";
+        metadata["data_type"] = endianness_string + "u8";
     }
 
     template <>
-    inline void set_data_type<xtl::half_float>(nlohmann::json& attrs)
+    inline void set_data_type<xtl::half_float>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = endianness_string + "f2";
+        metadata["data_type"] = endianness_string + "f2";
     }
 
     template <>
-    inline void set_data_type<float>(nlohmann::json& attrs)
+    inline void set_data_type<float>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = endianness_string + "f4";
+        metadata["data_type"] = endianness_string + "f4";
     }
 
     template <>
-    inline void set_data_type<double>(nlohmann::json& attrs)
+    inline void set_data_type<double>(nlohmann::json& metadata)
     {
-        attrs["data_type"] = endianness_string + "f8";
+        metadata["data_type"] = endianness_string + "f8";
     }
 
     /*************************
@@ -174,7 +149,8 @@ namespace xt
         virtual std::size_t get_offset() const = 0;
         virtual layout_type layout() const = 0;
 
-        virtual const nlohmann::json& attrs() const = 0;
+        virtual const nlohmann::json& get_metadata() const = 0;
+        virtual void set_metadata(const nlohmann::json& metadata) = 0;
         virtual std::size_t dimension() const = 0;
         virtual const shape_type& shape() const = 0;
         virtual void resize(const shape_type& shape) = 0;
@@ -242,7 +218,8 @@ namespace xt
         std::size_t get_offset() const override;
         layout_type layout() const override;
 
-        const nlohmann::json& attrs() const override;
+        const nlohmann::json& get_metadata() const override;
+        void set_metadata(const nlohmann::json& metadata) override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
@@ -258,7 +235,7 @@ namespace xt
         CTE m_expression;
         mutable xarray<value_type> m_cache;
         mutable bool m_cache_initialized;
-        nlohmann::json m_attrs;
+        nlohmann::json m_metadata;
     };
 
     /*******************
@@ -291,7 +268,8 @@ namespace xt
         std::size_t get_offset() const override;
         layout_type layout() const override;
 
-        const nlohmann::json& attrs() const override;
+        const nlohmann::json& get_metadata() const override;
+        void set_metadata(const nlohmann::json& metadata) override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
@@ -304,7 +282,7 @@ namespace xt
 
         CTE m_expression;
         xarray<value_type> m_array;
-        nlohmann::json m_attrs;
+        nlohmann::json m_metadata;
     };
 
     /******************
@@ -335,7 +313,8 @@ namespace xt
         std::size_t get_offset() const override;
         layout_type layout() const override;
 
-        const nlohmann::json& attrs() const override;
+        const nlohmann::json& get_metadata() const override;
+        void set_metadata(const nlohmann::json& metadata) override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type&) override;
@@ -347,7 +326,7 @@ namespace xt
         zarray_wrapper(const zarray_wrapper&) = default;
 
         CTE m_array;
-        nlohmann::json m_attrs;
+        nlohmann::json m_metadata;
     };
 
     /********************
@@ -389,7 +368,8 @@ namespace xt
         std::size_t get_offset() const override;
         layout_type layout() const override;
 
-        const nlohmann::json& attrs() const override;
+        const nlohmann::json& get_metadata() const override;
+        void set_metadata(const nlohmann::json& metadata) override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
         void resize(const shape_type& shape) override;
@@ -411,7 +391,7 @@ namespace xt
         mutable dynamic_shape<std::ptrdiff_t> m_strides;
         mutable bool m_strides_initialized;
 
-        nlohmann::json m_attrs;
+        nlohmann::json m_metadata;
 
     };
 
@@ -427,7 +407,7 @@ namespace xt
         , m_cache()
         , m_cache_initialized(false)
     {
-        set_data_type<value_type>(m_attrs);
+        set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -472,9 +452,15 @@ namespace xt
     }
 
     template <class CTE>
-    inline auto zexpression_wrapper<CTE>::attrs() const -> const nlohmann::json&
+    inline auto zexpression_wrapper<CTE>::get_metadata() const -> const nlohmann::json&
     {
-        return m_attrs;
+        return m_metadata;
+    }
+
+    template <class CTE>
+    inline void zexpression_wrapper<CTE>::set_metadata(const nlohmann::json& metadata)
+    {
+        m_metadata = metadata;
     }
 
     template <class CTE>
@@ -529,7 +515,7 @@ namespace xt
         , m_expression(std::forward<E>(e))
         , m_array(m_expression())
     {
-        set_data_type<value_type>(m_attrs);
+        set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -569,9 +555,15 @@ namespace xt
     }
 
     template <class CTE>
-    inline auto zscalar_wrapper<CTE>::attrs() const -> const nlohmann::json&
+    inline auto zscalar_wrapper<CTE>::get_metadata() const -> const nlohmann::json&
     {
-        return m_attrs;
+        return m_metadata;
+    }
+
+    template <class CTE>
+    inline void zscalar_wrapper<CTE>::set_metadata(const nlohmann::json& metadata)
+    {
+        m_metadata = metadata;
     }
 
     template <class CTE>
@@ -643,7 +635,7 @@ namespace xt
         : base_type()
         , m_array(std::forward<E>(e))
     {
-        set_data_type<value_type>(m_attrs);
+        set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -683,9 +675,15 @@ namespace xt
     }
 
     template <class CTE>
-    inline auto zarray_wrapper<CTE>::attrs() const -> const nlohmann::json&
+    inline auto zarray_wrapper<CTE>::get_metadata() const -> const nlohmann::json&
     {
-        return m_attrs;
+        return m_metadata;
+    }
+
+    template <class CTE>
+    inline void zarray_wrapper<CTE>::set_metadata(const nlohmann::json& metadata)
+    {
+        m_metadata = metadata;
     }
 
     template <class CTE>
@@ -735,7 +733,7 @@ namespace xt
         std::copy(m_chunked_array.chunk_shape().begin(),
                   m_chunked_array.chunk_shape().end(),
                   m_chunk_shape.begin());
-        set_data_type<value_type>(m_attrs);
+        set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -782,9 +780,15 @@ namespace xt
     }
 
     template <class CTE>
-    inline auto zchunked_wrapper<CTE>::attrs() const -> const nlohmann::json&
+    inline auto zchunked_wrapper<CTE>::get_metadata() const -> const nlohmann::json&
     {
-        return get_attrs(m_chunked_array, m_attrs);
+        return m_metadata;
+    }
+
+    template <class CTE>
+    inline void zchunked_wrapper<CTE>::set_metadata(const nlohmann::json& metadata)
+    {
+        m_metadata = metadata;
     }
 
     template <class CTE>
@@ -856,8 +860,8 @@ namespace xt
         {
         };
 
-        template <class CS, class E>
-        struct is_chunked_array<xchunked_array<CS, E>> : std::true_type
+        template <class CS>
+        struct is_chunked_array<xchunked_array<CS>> : std::true_type
         {
         };
 

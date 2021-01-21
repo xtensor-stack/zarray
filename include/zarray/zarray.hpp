@@ -91,7 +91,8 @@ namespace xt
 
         const zchunked_array& as_chunked_array() const;
 
-        const nlohmann::json& attrs() const;
+        const nlohmann::json& get_metadata() const;
+        void set_metadata(const nlohmann::json& metadata);
 
     private:
 
@@ -246,14 +247,19 @@ namespace xt
         return dynamic_cast<const zchunked_array&>(*(p_impl.get()));
     }
 
+    inline const nlohmann::json& zarray::get_metadata() const
+    {
+        return p_impl->get_metadata();
+    }
+
+    inline void zarray::set_metadata(const nlohmann::json& metadata)
+    {
+        return p_impl->set_metadata(metadata);
+    }
+
     inline zview<const zarray&> make_strided_view(const zarray& z, xstrided_slice_vector& slices)
     {
         return zview<const zarray&>(z, slices);
-    }
-
-    inline const nlohmann::json& zarray::attrs() const
-    {
-        return p_impl->attrs();
     }
 }
 
