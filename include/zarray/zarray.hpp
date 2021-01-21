@@ -18,6 +18,7 @@
 #include "zarray_impl.hpp"
 #include "zassign.hpp"
 #include "zfunction.hpp"
+#include "zview.hpp"
 #include "zmath.hpp"
 
 namespace xt
@@ -79,6 +80,8 @@ namespace xt
         template <class T>
         const xarray<T>& get_array() const;
 
+        const dynamic_shape<std::ptrdiff_t>& get_strides() const;
+        layout_type layout() const;
         std::size_t dimension() const;
         const shape_type& shape() const;
         void resize(const shape_type& shape);
@@ -205,6 +208,16 @@ namespace xt
         return p_impl->dimension();
     }
 
+    inline auto zarray::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
+    {
+        return p_impl->get_strides();
+    }
+
+    inline layout_type zarray::layout() const
+    {
+        return p_impl->layout();
+    }
+
     inline auto zarray::shape() const -> const shape_type&
     {
         return p_impl->shape();
@@ -228,6 +241,11 @@ namespace xt
     inline const zchunked_array& zarray::as_chunked_array() const
     {
         return dynamic_cast<const zchunked_array&>(*(p_impl.get()));
+    }
+
+    inline zview<const zarray&> make_strided_view(const zarray& z, xstrided_slice_vector& slices)
+    {
+        return zview<const zarray&>(z, slices);
     }
 }
 
