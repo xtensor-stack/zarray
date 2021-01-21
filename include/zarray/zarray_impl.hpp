@@ -22,31 +22,27 @@ namespace xt
 {
     const std::string endianness_string = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
 
-    // SFINAE test
-    template <typename T>
-    class HasAttrs
+    template <class T, class = void>
+    struct has_attrs : std::false_type
     {
-    private:
-        typedef char YesType[1];
-        typedef char NoType[2];
-
-        template <typename C> static YesType& test( decltype(&C::attrs) ) ;
-        template <typename C> static NoType& test(...);
-
-    public:
-        enum { value = sizeof(test<T>(0)) == sizeof(YesType) };
     };
 
     template <class T>
-    typename std::enable_if<HasAttrs<T>::value, const nlohmann::json&>::type
-    get_attrs(T& t, nlohmann::json& attrs)
+    struct has_attrs<T, void_t<decltype(std::declval<T>().attrs())>>
+        : std::true_type
+    {
+    };
+
+    template <class T>
+    typename std::enable_if<has_attrs<T>::value, const nlohmann::json&>::type
+    get_attrs(T& t, const nlohmann::json& attrs)
     {
         return t.attrs();
     }
 
     template <class T>
-    typename std::enable_if<!HasAttrs<T>::value, const nlohmann::json&>::type
-    get_attrs(T& t, nlohmann::json& attrs)
+    typename std::enable_if<!has_attrs<T>::value, const nlohmann::json&>::type
+    get_attrs(T& t, const nlohmann::json& attrs)
     {
         return attrs;
     }
@@ -262,7 +258,7 @@ namespace xt
         CTE m_expression;
         mutable xarray<value_type> m_cache;
         mutable bool m_cache_initialized;
-        mutable nlohmann::json m_attrs;
+        nlohmann::json m_attrs;
     };
 
     /*******************
@@ -308,7 +304,7 @@ namespace xt
 
         CTE m_expression;
         xarray<value_type> m_array;
-        mutable nlohmann::json m_attrs;
+        nlohmann::json m_attrs;
     };
 
     /******************
@@ -351,7 +347,7 @@ namespace xt
         zarray_wrapper(const zarray_wrapper&) = default;
 
         CTE m_array;
-        mutable nlohmann::json m_attrs;
+        nlohmann::json m_attrs;
     };
 
     /********************
@@ -415,7 +411,7 @@ namespace xt
         mutable dynamic_shape<std::ptrdiff_t> m_strides;
         mutable bool m_strides_initialized;
 
-        mutable nlohmann::json m_attrs;
+        nlohmann::json m_attrs;
 
     };
 
@@ -475,9 +471,10 @@ namespace xt
         return m_cache.layout();
     }
 
+    template <class CTE>
     inline auto zexpression_wrapper<CTE>::attrs() const -> const nlohmann::json&
     {
-        return get_attrs(m_expression, m_attrs);
+        return m_attrs;
     }
 
     template <class CTE>
@@ -574,7 +571,7 @@ namespace xt
     template <class CTE>
     inline auto zscalar_wrapper<CTE>::attrs() const -> const nlohmann::json&
     {
-        return get_attrs(m_array, m_attrs);
+        return m_attrs;
     }
 
     template <class CTE>
@@ -685,9 +682,10 @@ namespace xt
         return m_array.layout();
     }
 
+    template <class CTE>
     inline auto zarray_wrapper<CTE>::attrs() const -> const nlohmann::json&
     {
-        return get_attrs(m_array, m_attrs);
+        return m_attrs;
     }
 
     template <class CTE>
@@ -783,6 +781,7 @@ namespace xt
         return m_chunked_array.layout();
     }
 
+    template <class CTE>
     inline auto zchunked_wrapper<CTE>::attrs() const -> const nlohmann::json&
     {
         return get_attrs(m_chunked_array, m_attrs);
