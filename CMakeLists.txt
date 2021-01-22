@@ -29,7 +29,7 @@ message(STATUS "Building zarray v${${PROJECT_NAME}_VERSION}")
 # Dependencies
 # ============
 
-set(xtensor_REQUIRED_VERSION 0.21.9)
+set(xtensor_REQUIRED_VERSION 0.23.0)
 if(TARGET xtensor)
     set(xtensor_VERSION
         ${XTENSOR_VERSION_MAJOR}.${XTENSOR_VERSION_MINOR}.${XTENSOR_VERSION_PATCH})
@@ -45,6 +45,7 @@ else()
     message(STATUS "Found xtensor: ${xtensor_INCLUDE_DIRS}/xtensor")
 endif()
 
+find_package(nlohmann_json 3.2.0 REQUIRED)
 
 # Optional dependencies
 # =====================
