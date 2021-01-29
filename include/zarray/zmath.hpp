@@ -228,6 +228,12 @@ namespace xt
     XTENSOR_UNARY_ZFUNCTOR(zisinf, xt::isinf, math::isinf_fun);
     XTENSOR_UNARY_ZFUNCTOR(zisnan, xt::isnan, math::isnan_fun);
 
+
+    //this is similar to the impl of zreduce
+    //i need to change this type const detail::strided_view_args to the stuff that' sneeded to
+    //create the zreducer
+    //i'm gonna need to make a macro bc there several reducers (and i need to learn
+    //wt are all the diff ways of https://xtensor.readthedocs.io/en/latest/quickref/reducer.html#prod)
     struct zview_functor
     {
         template <class T>
@@ -246,10 +252,35 @@ namespace xt
     };
     XTENSOR_ZMAPPED_FUNCTOR(zview_functor, detail::xview_dummy_functor);
 
+#define XTENSOR_ZREDUCER(ZNAME, ZRED, XFUN)                                        \
+    struct ZNAME                                                                   \
+    {                                                                              \
+        template <class T, class R>                                                \
+        static void run(const ztyped_array<T>& z,                                  \
+                        ztyped_array<R>& zres,                                     \
+                        const detail::reducer_args& args)                          \
+        {                                                                          \
+            auto v = ZRED(z.get_array(), args.axes, args.options);                 \
+            zassign_wrapped_expression(zres.get_array(), v);                       \
+        }                                                                          \
+        template <class T>                                                         \
+        static size_t index(const ztyped_array<T>&)  /* dont know about this */    \
+        {                                                                          \
+            using value_type = decltype(std::declval<XFUN>()(std::declval<T>()));  \
+            return ztyped_array<value_type>::get_class_static_index();             \
+        }                                                                          \
+    };                                                                             \
+    XTENSOR_ZMAPPED_FUNCTOR(ZNAME, XFUN)
+
+    XTENSOR_ZREDUCER(zsum, xt::sum, something)
+    XTENSOR_ZREDUCER(zprod, xt::prod, somethingelse)
+    // ...
+
 #undef XTENSOR_BINARY_ZFUNCTOR
 #undef XTENSOR_UNARY_ZFUNCTOR
 #undef XTENSOR_BINARY_ZOPERATOR
 #undef XTENSOR_UNARY_ZOPERATOR
+#undef XTENSOR_ZREDUCER
 #undef XTENSOR_ZMAPPED_FUNCTOR
 
 }
