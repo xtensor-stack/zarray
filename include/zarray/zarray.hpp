@@ -94,7 +94,7 @@ namespace xt
         const nlohmann::json& get_metadata() const;
         void set_metadata(const nlohmann::json& metadata);
 
-        zarray_impl* make_view(xstrided_slice_vector& slices);
+        zarray make_view(xstrided_slice_vector& slices);
 
     private:
 
@@ -259,9 +259,10 @@ namespace xt
         return p_impl->set_metadata(metadata);
     }
 
-    inline zarray_impl* zarray::make_view(xstrided_slice_vector& slices)
+    inline zarray zarray::make_view(xstrided_slice_vector& slices)
     {
-        return p_impl->make_view(slices);
+        std::unique_ptr<zarray_impl> p(p_impl->make_view(slices));
+        return zarray(std::move(p));
     }
 }
 

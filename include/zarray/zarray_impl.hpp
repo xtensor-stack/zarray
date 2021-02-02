@@ -439,8 +439,7 @@ namespace xt
     inline zarray_impl* zexpression_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
     {
         auto e = strided_view(m_expression, slices);
-        zarray_impl* p_impl = e.derived_cast().allocate_result();
-        return p_impl;
+        return build_zarray(std::move(e));
     }
 
     template <class CTE>
@@ -553,8 +552,7 @@ namespace xt
     inline zarray_impl* zscalar_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
     {
         auto e = strided_view(m_array, slices);
-        zarray_impl* p_impl = e.derived_cast().allocate_result();
-        return p_impl;
+        return build_zarray(std::move(e));
     }
 
     template <class CTE>
@@ -681,8 +679,7 @@ namespace xt
     inline zarray_impl* zarray_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
     {
         auto e = strided_view(m_array, slices);
-        zarray_impl* p_impl = e.derived_cast().allocate_result();
-        return p_impl;
+        return build_zarray(std::move(e));
     }
 
     template <class CTE>
@@ -789,8 +786,7 @@ namespace xt
     inline zarray_impl* zchunked_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
     {
         auto e = strided_view(m_chunked_array, slices);
-        zarray_impl* p_impl = e.derived_cast().allocate_result();
-        return p_impl;
+        return build_zarray(std::move(e));
     }
 
     template <class CTE>
