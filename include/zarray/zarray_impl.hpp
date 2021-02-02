@@ -145,6 +145,7 @@ namespace xt
 
         virtual self_type* clone() const = 0;
 
+        virtual self_type* make_view(xstrided_slice_vector& slices) = 0;
         virtual const dynamic_shape<std::ptrdiff_t>& get_strides() const = 0;
         virtual std::size_t get_offset() const = 0;
         virtual layout_type layout() const = 0;
@@ -214,6 +215,7 @@ namespace xt
 
         self_type* clone() const override;
 
+        zarray_impl* make_view(xstrided_slice_vector& slices) override;
         const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
         std::size_t get_offset() const override;
         layout_type layout() const override;
@@ -264,6 +266,7 @@ namespace xt
 
         self_type* clone() const override;
 
+        zarray_impl* make_view(xstrided_slice_vector& slices) override;
         const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
         std::size_t get_offset() const override;
         layout_type layout() const override;
@@ -309,6 +312,7 @@ namespace xt
 
         self_type* clone() const override;
 
+        zarray_impl* make_view(xstrided_slice_vector& slices) override;
         const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
         std::size_t get_offset() const override;
         layout_type layout() const override;
@@ -364,6 +368,7 @@ namespace xt
 
         self_type* clone() const override;
 
+        zarray_impl* make_view(xstrided_slice_vector& slices) override;
         const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
         std::size_t get_offset() const override;
         layout_type layout() const override;
@@ -428,6 +433,14 @@ namespace xt
     inline auto zexpression_wrapper<CTE>::clone() const -> self_type*
     {
         return new self_type(*this);
+    }
+
+    template <class CTE>
+    inline zarray_impl* zexpression_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
+    {
+        auto e = strided_view(m_expression, slices);
+        zarray_impl* p_impl = e.derived_cast().allocate_result();
+        return p_impl;
     }
 
     template <class CTE>
@@ -534,6 +547,14 @@ namespace xt
     inline auto zscalar_wrapper<CTE>::clone() const -> self_type*
     {
         return new self_type(*this);
+    }
+
+    template <class CTE>
+    inline zarray_impl* zscalar_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
+    {
+        auto e = strided_view(m_array, slices);
+        zarray_impl* p_impl = e.derived_cast().allocate_result();
+        return p_impl;
     }
 
     template <class CTE>
@@ -657,6 +678,14 @@ namespace xt
     }
 
     template <class CTE>
+    inline zarray_impl* zarray_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
+    {
+        auto e = strided_view(m_array, slices);
+        zarray_impl* p_impl = e.derived_cast().allocate_result();
+        return p_impl;
+    }
+
+    template <class CTE>
     inline auto zarray_wrapper<CTE>::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
     {
         return m_array.strides();
@@ -754,6 +783,14 @@ namespace xt
     inline auto zchunked_wrapper<CTE>::clone() const -> self_type*
     {
         return new self_type(*this);
+    }
+
+    template <class CTE>
+    inline zarray_impl* zchunked_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
+    {
+        auto e = strided_view(m_chunked_array, slices);
+        zarray_impl* p_impl = e.derived_cast().allocate_result();
+        return p_impl;
     }
 
     template <class CTE>
