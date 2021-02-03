@@ -31,6 +31,19 @@ namespace xt
     template <class CTE>
     class zexpression_wrapper;
 
+    namespace detail
+    {
+        template <class E>
+        struct is_a_strided_view : std::false_type
+        {
+        };
+
+        template <class E, class S>
+        struct is_a_strided_view<xstrided_view<E, S>> : std::true_type
+        {
+        };
+    }
+
     /******************
      * zarray builder *
      ******************/
@@ -276,6 +289,8 @@ namespace xt
         self_type* clone() const override;
 
         zarray_impl* strided_view(xstrided_slice_vector& slices) override;
+        zarray_impl* strided_view_impl(xstrided_slice_vector& slices, std::true_type);
+        zarray_impl* strided_view_impl(xstrided_slice_vector& slices, std::false_type);
 
         const nlohmann::json& get_metadata() const override;
         void set_metadata(const nlohmann::json& metadata) override;
@@ -486,8 +501,21 @@ namespace xt
     template <class CTE>
     inline zarray_impl* zexpression_wrapper<CTE>::strided_view(xstrided_slice_vector& slices)
     {
+        return strided_view_impl(slices, detail::is_a_strided_view<CTE>());
+    }
+
+    template <class CTE>
+    inline zarray_impl* zexpression_wrapper<CTE>::strided_view_impl(xstrided_slice_vector& slices, std::true_type)
+    {
         compute_cache();
         auto e = xt::strided_view(m_cache, slices);
+        return detail::build_zarray(std::move(e));
+    }
+
+    template <class CTE>
+    inline zarray_impl* zexpression_wrapper<CTE>::strided_view_impl(xstrided_slice_vector& slices, std::false_type)
+    {
+        auto e = xt::strided_view(m_expression, slices);
         return detail::build_zarray(std::move(e));
     }
 

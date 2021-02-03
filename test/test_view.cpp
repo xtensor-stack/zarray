@@ -23,14 +23,18 @@ namespace xt
         init_zsystem();
 
         xarray<double> a = {{1., 2.}, {3., 4.}};
-        xstrided_slice_vector sv({xt::all(), 1});
-        xarray<double> expected = xt::strided_view(a, sv);
+        xstrided_slice_vector sv1({xt::all(), 1});
+        xstrided_slice_vector sv2({1});
+        xarray<double> expected1 = xt::strided_view(a, sv1);
+        xarray<double> expected2 = xt::strided_view(expected1, sv2);
 
         zarray za(a);
 
-        zarray zres = strided_view(za, sv);
+        zarray zres1 = strided_view(za, sv1);
+        zarray zres2 = strided_view(zres1, sv2);
 
-        EXPECT_EQ(zres.get_array<double>(), expected);
+        EXPECT_EQ(zres1.get_array<double>(), expected1);
+        EXPECT_EQ(zres2.get_array<double>(), expected2);
     }
 
     TEST(zview, chunked_strided_view)
