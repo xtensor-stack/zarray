@@ -28,7 +28,7 @@ namespace xt
 
         zarray za(a);
 
-        zarray zres = za.make_view(sv);
+        zarray zres = strided_view(za, sv);
 
         EXPECT_EQ(zres.get_array<double>(), expected);
     }
@@ -50,7 +50,7 @@ namespace xt
 
         zarray za(ca);
 
-        zarray zres = za.make_view(sv);
+        zarray zres = strided_view(za, sv);
 
         EXPECT_EQ(zres.get_array<double>(), expected);
     }

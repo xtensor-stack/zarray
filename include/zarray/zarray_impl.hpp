@@ -17,9 +17,72 @@
 #include <xtensor/xnoalias.hpp>
 #include <xtensor/xscalar.hpp>
 #include <xtensor/xshape.hpp>
+#include <xtensor/xshape.hpp>
+#include "xtensor/xstrided_view.hpp"
 
 namespace xt
 {
+    template <class CTE>
+    class zarray_wrapper;
+
+    template <class CTE>
+    class zchunked_wrapper;
+
+    template <class CTE>
+    class zexpression_wrapper;
+
+    /******************
+     * zarray builder *
+     ******************/
+
+    namespace detail
+    {
+        template <class E>
+        struct is_xarray : std::false_type
+        {
+        };
+
+        template <class T, layout_type L, class A, class SA>
+        struct is_xarray<xarray<T, L, A, SA>> : std::true_type
+        {
+        };
+
+        template <class E>
+        struct is_chunked_array : std::false_type
+        {
+        };
+
+        template <class CS>
+        struct is_chunked_array<xchunked_array<CS>> : std::true_type
+        {
+        };
+
+        template <class E>
+        struct zwrapper_builder
+        {
+            using closure_type = xtl::closure_type_t<E>;
+            using wrapper_type = std::conditional_t<is_xarray<std::decay_t<E>>::value,
+                                                    zarray_wrapper<closure_type>,
+                                                    std::conditional_t<is_chunked_array<std::decay_t<E>>::value,
+                                                                       zchunked_wrapper<closure_type>,
+                                                                       zexpression_wrapper<closure_type>
+                                                                      >
+                                                    >;
+
+            template <class OE>
+            static wrapper_type* run(OE&& e)
+            {
+                return new wrapper_type(std::forward<OE>(e));
+            }
+        };
+
+        template <class E>
+        inline auto build_zarray(E&& e)
+        {
+            return zwrapper_builder<E>::run(std::forward<E>(e));
+        }
+    }
+
     const std::string endianness_string = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
 
     template <class T>
@@ -145,10 +208,7 @@ namespace xt
 
         virtual self_type* clone() const = 0;
 
-        virtual self_type* make_view(xstrided_slice_vector& slices) = 0;
-        virtual const dynamic_shape<std::ptrdiff_t>& get_strides() const = 0;
-        virtual std::size_t get_offset() const = 0;
-        virtual layout_type layout() const = 0;
+        virtual self_type* strided_view(xstrided_slice_vector& slices) = 0;
 
         virtual const nlohmann::json& get_metadata() const = 0;
         virtual void set_metadata(const nlohmann::json& metadata) = 0;
@@ -215,10 +275,7 @@ namespace xt
 
         self_type* clone() const override;
 
-        zarray_impl* make_view(xstrided_slice_vector& slices) override;
-        const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
-        std::size_t get_offset() const override;
-        layout_type layout() const override;
+        zarray_impl* strided_view(xstrided_slice_vector& slices) override;
 
         const nlohmann::json& get_metadata() const override;
         void set_metadata(const nlohmann::json& metadata) override;
@@ -266,10 +323,7 @@ namespace xt
 
         self_type* clone() const override;
 
-        zarray_impl* make_view(xstrided_slice_vector& slices) override;
-        const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
-        std::size_t get_offset() const override;
-        layout_type layout() const override;
+        zarray_impl* strided_view(xstrided_slice_vector& slices) override;
 
         const nlohmann::json& get_metadata() const override;
         void set_metadata(const nlohmann::json& metadata) override;
@@ -312,10 +366,7 @@ namespace xt
 
         self_type* clone() const override;
 
-        zarray_impl* make_view(xstrided_slice_vector& slices) override;
-        const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
-        std::size_t get_offset() const override;
-        layout_type layout() const override;
+        zarray_impl* strided_view(xstrided_slice_vector& slices) override;
 
         const nlohmann::json& get_metadata() const override;
         void set_metadata(const nlohmann::json& metadata) override;
@@ -368,10 +419,7 @@ namespace xt
 
         self_type* clone() const override;
 
-        zarray_impl* make_view(xstrided_slice_vector& slices) override;
-        const dynamic_shape<std::ptrdiff_t>& get_strides() const override;
-        std::size_t get_offset() const override;
-        layout_type layout() const override;
+        zarray_impl* strided_view(xstrided_slice_vector& slices) override;
 
         const nlohmann::json& get_metadata() const override;
         void set_metadata(const nlohmann::json& metadata) override;
@@ -436,31 +484,11 @@ namespace xt
     }
 
     template <class CTE>
-    inline zarray_impl* zexpression_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
-    {
-        auto e = strided_view(m_expression, slices);
-        return build_zarray(std::move(e));
-    }
-
-    template <class CTE>
-    inline auto zexpression_wrapper<CTE>::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
+    inline zarray_impl* zexpression_wrapper<CTE>::strided_view(xstrided_slice_vector& slices)
     {
         compute_cache();
-        return m_cache.get_strides();
-    }
-
-    template <class CTE>
-    inline std::size_t zexpression_wrapper<CTE>::get_offset() const
-    {
-        compute_cache();
-        return m_cache.get_offset();
-    }
-
-    template <class CTE>
-    inline layout_type zexpression_wrapper<CTE>::layout() const
-    {
-        compute_cache();
-        return m_cache.layout();
+        auto e = xt::strided_view(m_cache, slices);
+        return detail::build_zarray(std::move(e));
     }
 
     template <class CTE>
@@ -549,28 +577,10 @@ namespace xt
     }
 
     template <class CTE>
-    inline zarray_impl* zscalar_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
+    inline zarray_impl* zscalar_wrapper<CTE>::strided_view(xstrided_slice_vector& slices)
     {
-        auto e = strided_view(m_array, slices);
-        return build_zarray(std::move(e));
-    }
-
-    template <class CTE>
-    inline auto zscalar_wrapper<CTE>::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
-    {
-        return m_array.strides();
-    }
-
-    template <class CTE>
-    inline std::size_t zscalar_wrapper<CTE>::get_offset() const
-    {
-        return 0;
-    }
-
-    template <class CTE>
-    inline layout_type zscalar_wrapper<CTE>::layout() const
-    {
-        return m_array.layout();
+        auto e = xt::strided_view(m_array, slices);
+        return detail::build_zarray(std::move(e));
     }
 
     template <class CTE>
@@ -676,28 +686,10 @@ namespace xt
     }
 
     template <class CTE>
-    inline zarray_impl* zarray_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
+    inline zarray_impl* zarray_wrapper<CTE>::strided_view(xstrided_slice_vector& slices)
     {
-        auto e = strided_view(m_array, slices);
-        return build_zarray(std::move(e));
-    }
-
-    template <class CTE>
-    inline auto zarray_wrapper<CTE>::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
-    {
-        return m_array.strides();
-    }
-
-    template <class CTE>
-    inline std::size_t zarray_wrapper<CTE>::get_offset() const
-    {
-        return 0;
-    }
-
-    template <class CTE>
-    inline layout_type zarray_wrapper<CTE>::layout() const
-    {
-        return m_array.layout();
+        auto e = xt::strided_view(m_array, slices);
+        return detail::build_zarray(std::move(e));
     }
 
     template <class CTE>
@@ -783,33 +775,10 @@ namespace xt
     }
 
     template <class CTE>
-    inline zarray_impl* zchunked_wrapper<CTE>::make_view(xstrided_slice_vector& slices)
+    inline zarray_impl* zchunked_wrapper<CTE>::strided_view(xstrided_slice_vector& slices)
     {
-        auto e = strided_view(m_chunked_array, slices);
-        return build_zarray(std::move(e));
-    }
-
-    template <class CTE>
-    inline auto zchunked_wrapper<CTE>::get_strides() const -> const dynamic_shape<std::ptrdiff_t>&
-    {
-        if (!m_strides_initialized)
-        {
-            m_strides = detail::get_strides<XTENSOR_DEFAULT_TRAVERSAL>(m_chunked_array);
-            m_strides_initialized = true;
-        }
-        return m_strides;
-    }
-
-    template <class CTE>
-    inline std::size_t zchunked_wrapper<CTE>::get_offset() const
-    {
-        return 0;
-    }
-
-    template <class CTE>
-    inline layout_type zchunked_wrapper<CTE>::layout() const
-    {
-        return m_chunked_array.layout();
+        auto e = xt::strided_view(m_chunked_array, slices);
+        return detail::build_zarray(std::move(e));
     }
 
     template <class CTE>
@@ -869,58 +838,6 @@ namespace xt
         {
             m_cache = m_chunked_array;
             m_cache_initialized = true;
-        }
-    }
-
-    /******************
-     * zarray builder *
-     ******************/
-
-    namespace detail
-    {
-        template <class E>
-        struct is_xarray : std::false_type
-        {
-        };
-
-        template <class T, layout_type L, class A, class SA>
-        struct is_xarray<xarray<T, L, A, SA>> : std::true_type
-        {
-        };
-
-        template <class E>
-        struct is_chunked_array : std::false_type
-        {
-        };
-
-        template <class CS>
-        struct is_chunked_array<xchunked_array<CS>> : std::true_type
-        {
-        };
-
-        template <class E>
-        struct zwrapper_builder
-        {
-            using closure_type = xtl::closure_type_t<E>;
-            using wrapper_type = std::conditional_t<is_xarray<std::decay_t<E>>::value,
-                                                    zarray_wrapper<closure_type>,
-                                                    std::conditional_t<is_chunked_array<std::decay_t<E>>::value,
-                                                                       zchunked_wrapper<closure_type>,
-                                                                       zexpression_wrapper<closure_type>
-                                                                      >
-                                                    >;
-
-            template <class OE>
-            static wrapper_type* run(OE&& e)
-            {
-                return new wrapper_type(std::forward<OE>(e));
-            }
-        };
-
-        template <class E>
-        inline auto build_zarray(E&& e)
-        {
-            return zwrapper_builder<E>::run(std::forward<E>(e));
         }
     }
 }
