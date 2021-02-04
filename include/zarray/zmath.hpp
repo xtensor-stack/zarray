@@ -31,7 +31,6 @@ namespace xt
     {
         struct xassign_dummy_functor {};
         struct xmove_dummy_functor {};
-        struct xview_dummy_functor {};
     }
 
     struct zassign_functor
@@ -227,24 +226,6 @@ namespace xt
     XTENSOR_UNARY_ZFUNCTOR(zisfinite, xt::isfinite, math::isfinite_fun);
     XTENSOR_UNARY_ZFUNCTOR(zisinf, xt::isinf, math::isinf_fun);
     XTENSOR_UNARY_ZFUNCTOR(zisnan, xt::isnan, math::isnan_fun);
-
-    struct zview_functor
-    {
-        template <class T>
-        static void run(const ztyped_array<T>& z, ztyped_array<T>& zres, const detail::strided_view_args<detail::no_adj_strides_policy>& args)
-        {
-            using view_type = xstrided_view<xclosure_t<xarray<T>>, decltype(args.new_shape)>;
-            auto v = view_type(z.get_array(), args.new_shape, decltype(args.new_strides)(args.new_strides), args.new_offset, args.new_layout);
-            zassign_wrapped_expression(zres.get_array(), v);
-        }
-
-        template <class T>
-        static size_t index(const ztyped_array<T>&)
-        {
-            return ztyped_array<T>::get_class_static_index();
-        }
-    };
-    XTENSOR_ZMAPPED_FUNCTOR(zview_functor, detail::xview_dummy_functor);
 
 #undef XTENSOR_BINARY_ZFUNCTOR
 #undef XTENSOR_UNARY_ZFUNCTOR

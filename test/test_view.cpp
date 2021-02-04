@@ -18,43 +18,23 @@ namespace xt
 {
     namespace fs = ghc::filesystem;
 
-    TEST(zview, assign_to)
-    {
-        using dispatcher_type = zdispatcher_t<detail::xview_dummy_functor, 1, 1>;
-        dispatcher_type::init();
-
-        using zfunction_type = zview<const zarray&>;
-
-        xarray<double> a = {{1., 2.}, {3., 4.}};
-        xt::xstrided_slice_vector sv({xt::all(), 1});
-        xarray<double> expected = xt::strided_view(a, sv);
-        auto res = xarray<double>::from_shape({2});
-
-        zarray za(a);
-        zarray zres(res);
-
-        zfunction_type f(za, sv);
-        f.assign_to(zres.get_implementation());
-
-        EXPECT_EQ(res, expected);
-
-        size_t res_index = f.get_result_type_index();
-        EXPECT_EQ(res_index, ztyped_array<double>::get_class_static_index());
-    }
-
     TEST(zview, strided_view)
     {
         init_zsystem();
 
         xarray<double> a = {{1., 2.}, {3., 4.}};
-        xstrided_slice_vector sv({xt::all(), 1});
-        xarray<double> expected = xt::strided_view(a, sv);
+        xstrided_slice_vector sv1({xt::all(), 1});
+        xstrided_slice_vector sv2({1});
+        xarray<double> expected1 = xt::strided_view(a, sv1);
+        xarray<double> expected2 = xt::strided_view(expected1, sv2);
 
         zarray za(a);
 
-        zarray zres = make_strided_view(za, sv);
+        zarray zres1 = strided_view(za, sv1);
+        zarray zres2 = strided_view(zres1, sv2);
 
-        EXPECT_EQ(zres.get_array<double>(), expected);
+        EXPECT_EQ(zres1.get_array<double>(), expected1);
+        EXPECT_EQ(zres2.get_array<double>(), expected2);
     }
 
     TEST(zview, chunked_strided_view)
@@ -74,7 +54,7 @@ namespace xt
 
         zarray za(ca);
 
-        zarray zres = make_strided_view(za, sv);
+        zarray zres = strided_view(za, sv);
 
         EXPECT_EQ(zres.get_array<double>(), expected);
     }
