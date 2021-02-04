@@ -34,12 +34,12 @@ namespace xt
     namespace detail
     {
         template <class E>
-        struct is_a_strided_view : std::false_type
+        struct is_xstrided_view : std::false_type
         {
         };
 
-        template <class E, class S>
-        struct is_a_strided_view<xstrided_view<E, S>> : std::true_type
+        template <class CT, class S, layout_type L, class FST>
+        struct is_xstrided_view<xstrided_view<CT, S, L, FST>> : std::true_type
         {
         };
     }
@@ -501,14 +501,13 @@ namespace xt
     template <class CTE>
     inline zarray_impl* zexpression_wrapper<CTE>::strided_view(xstrided_slice_vector& slices)
     {
-        return strided_view_impl(slices, detail::is_a_strided_view<CTE>());
+        return strided_view_impl(slices, detail::is_xstrided_view<CTE>());
     }
 
     template <class CTE>
     inline zarray_impl* zexpression_wrapper<CTE>::strided_view_impl(xstrided_slice_vector& slices, std::true_type)
     {
-        compute_cache();
-        auto e = xt::strided_view(m_cache, slices);
+        auto e = xt::strided_view(get_array(), slices);
         return detail::build_zarray(std::move(e));
     }
 

@@ -12,7 +12,6 @@
 
 #include <xtl/xmultimethods.hpp>
 
-#include "xtensor/xstrided_view.hpp"
 #include "zdispatching_types.hpp"
 #include "zmath.hpp"
 
@@ -39,50 +38,6 @@ namespace xt
         xtl::static_caster,
         xtl::basic_fast_dispatcher
     >;
-
-    /********************
-     * zview_dispatcher *
-     ********************/
-
-    // The view dispatcher dispatches on the single argument and forwards a
-    // single undispatched argument (the slices).
-
-    template <class F>
-    class zview_dispatcher
-    {
-    public:
-
-        template <class T>
-        static void insert();
-
-        template <class T, class... U>
-        static void register_dispatching(mpl::vector<mpl::vector<T, T>, U...>);
-
-        static void init();
-        template <class V>
-        static void dispatch(const zarray_impl& z1, zarray_impl& res, V& udarg);
-        static size_t get_type_index(const zarray_impl& z1);
-
-    private:
-
-        static zview_dispatcher& instance();
-
-        zview_dispatcher();
-        ~zview_dispatcher() = default;
-
-        template <class T>
-        void insert_impl();
-
-        template <class T, class...U>
-        inline void register_dispatching_impl(mpl::vector<mpl::vector<T, T>, U...>);
-        inline void register_dispatching_impl(mpl::vector<>);
-
-        using zfunctor_type = get_zmapped_functor_t<F>;
-        using zrun_dispatcher = zrun_dispatcher_impl<mpl::vector<const zarray_impl, zarray_impl>, mpl::vector<const detail::strided_view_args<detail::no_adj_strides_policy>>>;
-
-        zrun_dispatcher m_run_dispatcher;
-    };
-
 
     /**********************
      * zdouble_dispatcher *
@@ -182,12 +137,6 @@ namespace xt
     struct zdispatcher;
 
     template <class F>
-    struct zdispatcher<F, 1, 1>
-    {
-        using type = zview_dispatcher<F>;
-    };
-
-    template <class F>
     struct zdispatcher<F, 1>
     {
         using type = zdouble_dispatcher<F>;
@@ -252,12 +201,6 @@ namespace xt
         };
 
         template <>
-        struct unary_dispatching_types<xview_dummy_functor>
-        {
-            using type = zunary_ident_types;
-        };
-
-        template <>
         struct unary_dispatching_types<xassign_dummy_functor>
         {
             using type = zunary_ident_types;
@@ -309,78 +252,6 @@ namespace xt
 
         template <class F>
         using unary_dispatching_types_t = typename unary_dispatching_types<F>::type;
-    }
-
-    /***********************************
-     * zview_dispatcher implementation *
-     ***********************************/
-
-    template <class F>
-    template <class T>
-    inline void zview_dispatcher<F>::insert()
-    {
-        instance().template insert_impl<T>();
-    }
-
-    template <class F>
-    template <class T, class... U>
-    inline void zview_dispatcher<F>::register_dispatching(mpl::vector<mpl::vector<T, T>, U...>)
-    {
-        instance().register_dispatching_impl(mpl::vector<mpl::vector<T, T>, U...>());
-    }
-
-    template <class F>
-    inline void zview_dispatcher<F>::init()
-    {
-        instance();
-    }
-
-    template <class F>
-    template <class V>
-    inline void zview_dispatcher<F>::dispatch(const zarray_impl& z1, zarray_impl& z2, V& udarg)
-    {
-        instance().m_run_dispatcher.dispatch(z1, z2, udarg);
-    }
-
-    template <class F>
-    inline size_t zview_dispatcher<F>::get_type_index(const zarray_impl& z1)
-    {
-        return z1.get_class_index();
-    }
-
-    template <class F>
-    inline zview_dispatcher<F>& zview_dispatcher<F>::instance()
-    {
-        static zview_dispatcher<F> inst;
-        return inst;
-    }
-
-    template <class F>
-    inline zview_dispatcher<F>::zview_dispatcher()
-    {
-        register_dispatching_impl(detail::unary_dispatching_types_t<F>());
-    }
-
-    template <class F>
-    template <class T>
-    inline void zview_dispatcher<F>::insert_impl()
-    {
-        using arg_type = const ztyped_array<T>;
-        using res_type = ztyped_array<T>;
-        m_run_dispatcher.template insert<arg_type, res_type>(&zfunctor_type::template run<T>);
-    }
-
-    template <class F>
-    template <class T, class...U>
-    inline void zview_dispatcher<F>::register_dispatching_impl(mpl::vector<mpl::vector<T, T>, U...>)
-    {
-        insert_impl<T>();
-        register_dispatching_impl(mpl::vector<U...>());
-    }
-
-    template <class F>
-    inline void zview_dispatcher<F>::register_dispatching_impl(mpl::vector<>)
-    {
     }
 
     /*************************************
@@ -632,7 +503,6 @@ namespace xt
     {
         inline void init_zdispatchers()
         {
-            zdispatcher_t<xview_dummy_functor, 1, 1>::init();
             zdispatcher_t<xassign_dummy_functor, 1>::init();
             zdispatcher_t<xmove_dummy_functor, 1>::init();
             zdispatcher_t<identity, 1>::init();
