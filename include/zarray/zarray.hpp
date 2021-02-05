@@ -249,6 +249,12 @@ namespace xt
         std::unique_ptr<zarray_impl> p(z.get_implementation().strided_view(slices));
         return zarray(std::move(p));
     }
+
+    inline zarray mean(zarray& z)
+    {
+        std::unique_ptr<zarray_impl> p(z.get_implementation().mean());
+        return zarray(std::move(p));
+    }
 }
 
 #endif

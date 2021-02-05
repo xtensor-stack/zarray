@@ -19,6 +19,7 @@
 #include <xtensor/xshape.hpp>
 #include <xtensor/xshape.hpp>
 #include "xtensor/xstrided_view.hpp"
+#include "xtensor/xreducer.hpp"
 
 namespace xt
 {
@@ -40,6 +41,16 @@ namespace xt
 
         template <class CT, class S, layout_type L, class FST>
         struct is_xstrided_view<xstrided_view<CT, S, L, FST>> : std::true_type
+        {
+        };
+
+        template <class E>
+        struct is_xreducer : std::false_type
+        {
+        };
+
+        template <class F, class CT, class X, class O>
+        struct is_xreducer<xreducer<F, CT, X, O>> : std::true_type
         {
         };
     }
@@ -222,6 +233,7 @@ namespace xt
         virtual self_type* clone() const = 0;
 
         virtual self_type* strided_view(xstrided_slice_vector& slices) = 0;
+        virtual self_type* mean() = 0;
 
         virtual const nlohmann::json& get_metadata() const = 0;
         virtual void set_metadata(const nlohmann::json& metadata) = 0;
@@ -291,6 +303,9 @@ namespace xt
         zarray_impl* strided_view(xstrided_slice_vector& slices) override;
         zarray_impl* strided_view_impl(xstrided_slice_vector& slices, std::true_type);
         zarray_impl* strided_view_impl(xstrided_slice_vector& slices, std::false_type);
+        zarray_impl* mean() override;
+        zarray_impl* mean_impl(std::true_type);
+        zarray_impl* mean_impl(std::false_type);
 
         const nlohmann::json& get_metadata() const override;
         void set_metadata(const nlohmann::json& metadata) override;
@@ -339,6 +354,7 @@ namespace xt
         self_type* clone() const override;
 
         zarray_impl* strided_view(xstrided_slice_vector& slices) override;
+        zarray_impl* mean() override;
 
         const nlohmann::json& get_metadata() const override;
         void set_metadata(const nlohmann::json& metadata) override;
@@ -382,6 +398,7 @@ namespace xt
         self_type* clone() const override;
 
         zarray_impl* strided_view(xstrided_slice_vector& slices) override;
+        zarray_impl* mean() override;
 
         const nlohmann::json& get_metadata() const override;
         void set_metadata(const nlohmann::json& metadata) override;
@@ -435,6 +452,7 @@ namespace xt
         self_type* clone() const override;
 
         zarray_impl* strided_view(xstrided_slice_vector& slices) override;
+        zarray_impl* mean() override;
 
         const nlohmann::json& get_metadata() const override;
         void set_metadata(const nlohmann::json& metadata) override;
@@ -515,6 +533,26 @@ namespace xt
     inline zarray_impl* zexpression_wrapper<CTE>::strided_view_impl(xstrided_slice_vector& slices, std::false_type)
     {
         auto e = xt::strided_view(m_expression, slices);
+        return detail::build_zarray(std::move(e));
+    }
+
+    template <class CTE>
+    inline zarray_impl* zexpression_wrapper<CTE>::mean()
+    {
+        return mean_impl(detail::is_xreducer<CTE>());
+    }
+
+    template <class CTE>
+    inline zarray_impl* zexpression_wrapper<CTE>::mean_impl(std::true_type)
+    {
+        auto e = xt::mean(get_array());
+        return detail::build_zarray(std::move(e));
+    }
+
+    template <class CTE>
+    inline zarray_impl* zexpression_wrapper<CTE>::mean_impl(std::false_type)
+    {
+        auto e = xt::mean(m_expression);
         return detail::build_zarray(std::move(e));
     }
 
@@ -607,6 +645,13 @@ namespace xt
     inline zarray_impl* zscalar_wrapper<CTE>::strided_view(xstrided_slice_vector& slices)
     {
         auto e = xt::strided_view(m_array, slices);
+        return detail::build_zarray(std::move(e));
+    }
+
+    template <class CTE>
+    inline zarray_impl* zscalar_wrapper<CTE>::mean()
+    {
+        auto e = xt::mean(m_array);
         return detail::build_zarray(std::move(e));
     }
 
@@ -720,6 +765,13 @@ namespace xt
     }
 
     template <class CTE>
+    inline zarray_impl* zarray_wrapper<CTE>::mean()
+    {
+        auto e = xt::mean(m_array);
+        return detail::build_zarray(std::move(e));
+    }
+
+    template <class CTE>
     inline auto zarray_wrapper<CTE>::get_metadata() const -> const nlohmann::json&
     {
         return m_metadata;
@@ -805,6 +857,13 @@ namespace xt
     inline zarray_impl* zchunked_wrapper<CTE>::strided_view(xstrided_slice_vector& slices)
     {
         auto e = xt::strided_view(m_chunked_array, slices);
+        return detail::build_zarray(std::move(e));
+    }
+
+    template <class CTE>
+    inline zarray_impl* zchunked_wrapper<CTE>::mean()
+    {
+        auto e = xt::mean(m_chunked_array);
         return detail::build_zarray(std::move(e));
     }
 

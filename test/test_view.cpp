@@ -18,10 +18,8 @@ namespace xt
 {
     namespace fs = ghc::filesystem;
 
-    TEST(zview, strided_view)
+    TEST(view, strided_view)
     {
-        init_zsystem();
-
         xarray<double> a = {{1., 2.}, {3., 4.}};
         xstrided_slice_vector sv1({xt::all(), 1});
         xstrided_slice_vector sv2({1});
@@ -37,10 +35,8 @@ namespace xt
         EXPECT_EQ(zres2.get_array<double>(), expected2);
     }
 
-    TEST(zview, chunked_strided_view)
+    TEST(view, chunked_strided_view)
     {
-        init_zsystem();
-
         std::vector<size_t> shape = {4, 4};
         std::vector<size_t> chunk_shape = {2, 2};
         std::string chunk_dir = "chunk_dir";
