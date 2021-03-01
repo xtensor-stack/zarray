@@ -18,15 +18,13 @@ namespace xt
 {
     namespace fs = ghc::filesystem;
 
-    TEST(zview, strided_view)
+    TEST(zview, get_strided_view)
     {
-        init_zsystem();
-
         xarray<double> a = {{1., 2.}, {3., 4.}};
-        xstrided_slice_vector sv1({xt::all(), 1});
+        xstrided_slice_vector sv1({all(), 1});
         xstrided_slice_vector sv2({1});
-        xarray<double> expected1 = xt::strided_view(a, sv1);
-        xarray<double> expected2 = xt::strided_view(expected1, sv2);
+        xarray<double> expected1 = strided_view(a, sv1);
+        xarray<double> expected2 = strided_view(expected1, sv2);
 
         zarray za(a);
 
@@ -37,19 +35,29 @@ namespace xt
         EXPECT_EQ(zres2.get_array<double>(), expected2);
     }
 
-    TEST(zview, chunked_strided_view)
+    TEST(zview, set_strided_view)
     {
-        init_zsystem();
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        xstrided_slice_vector sv({all(), 1});
+        xarray<double> expected = {{1., 5.}, {3., 6.}};
 
+        zarray za(a);
+        strided_view(za, sv) = strided_view(expected, sv);
+
+        EXPECT_EQ(za.get_array<double>(), expected);
+    }
+
+    TEST(zview, get_chunked_strided_view)
+    {
         std::vector<size_t> shape = {4, 4};
         std::vector<size_t> chunk_shape = {2, 2};
-        std::string chunk_dir = "chunk_dir";
+        std::string chunk_dir = "chunk_dir1";
         fs::create_directory(chunk_dir);
         double init_value = 123.456;
         auto ca = chunked_file_array<double, xio_disk_handler<xio_binary_config>>(shape, chunk_shape, chunk_dir, init_value);
         xarray<double> a = {{1., 2.}, {3., 4.}};
         view(ca, range(0, 2), range(0, 2)) = a;
-        xt::xstrided_slice_vector sv({xt::all(), 1});
+        xstrided_slice_vector sv({all(), 1});
         xarray<double> expected = {2, 4, init_value, init_value};
 
         zarray za(ca);
@@ -57,5 +65,25 @@ namespace xt
         zarray zres = strided_view(za, sv);
 
         EXPECT_EQ(zres.get_array<double>(), expected);
+    }
+
+    TEST(zview, set_chunked_strided_view)
+    {
+        std::vector<size_t> shape = {4, 4};
+        std::vector<size_t> chunk_shape = {2, 2};
+        std::string chunk_dir = "chunk_dir2";
+        fs::create_directory(chunk_dir);
+        double init_value = 123.456;
+        auto ca = chunked_file_array<double, xio_disk_handler<xio_binary_config>>(shape, chunk_shape, chunk_dir, init_value);
+
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        xstrided_slice_vector sv({range(2, 4), range(2, 4)});
+        xarray<double> expected = ones<double>({4, 4}) * init_value;
+        strided_view(expected, sv) = a;
+
+        zarray za(ca);
+        strided_view(za, sv) = a;
+
+        EXPECT_EQ(za.get_array<double>(), expected);
     }
 }
