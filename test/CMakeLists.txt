@@ -152,6 +152,7 @@ find_package(Threads)
 include_directories(${GTEST_INCLUDE_DIRS} SYSTEM)
 
 set(ZARRAY_TESTS
+    test_init.cpp
     test_zarray.cpp
     test_zfunction.cpp
     test_view.cpp)
