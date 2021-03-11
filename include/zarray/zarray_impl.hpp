@@ -544,13 +544,13 @@ namespace xt
     }
 
     template <class CTE>
-    inline void zexpression_wrapper<CTE>::resize(const shape_type& shape)
+    inline void zexpression_wrapper<CTE>::resize(const shape_type&)
     {
         throw std::runtime_error("cannot resize expression wrapper");
     }
 
     template <class CTE>
-    inline void zexpression_wrapper<CTE>::resize(shape_type&& shape)
+    inline void zexpression_wrapper<CTE>::resize(shape_type&&)
     {
         throw std::runtime_error("cannot resize expression wrapper");
     }

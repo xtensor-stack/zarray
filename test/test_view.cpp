@@ -13,6 +13,7 @@
 #include "xtensor-io/xio_binary.hpp"
 #include "xtensor-io/xio_disk_handler.hpp"
 #include "xtensor/xview.hpp"
+#include "test_init.hpp"
 
 namespace xt
 {
@@ -20,7 +21,7 @@ namespace xt
 
     TEST(zview, strided_view)
     {
-        init_zsystem();
+        initialize_dispatchers();
 
         xarray<double> a = {{1., 2.}, {3., 4.}};
         xstrided_slice_vector sv1({xt::all(), 1});
@@ -39,7 +40,7 @@ namespace xt
 
     TEST(zview, chunked_strided_view)
     {
-        init_zsystem();
+        initialize_dispatchers();
 
         std::vector<size_t> shape = {4, 4};
         std::vector<size_t> chunk_shape = {2, 2};
