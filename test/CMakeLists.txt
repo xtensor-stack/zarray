@@ -157,11 +157,33 @@ set(ZARRAY_TESTS
     test_zfunction.cpp
     test_view.cpp)
 
-add_executable(test_zarray_lib ${COMMON_BASE} ${ZARRAY_TESTS})
-if(XTENSOR_USE_XSIMD)
+foreach(filename IN LISTS ZARRAY_TESTS)
+    string(REPLACE ".cpp" "" targetname ${filename})
+    add_executable(${targetname} ${filename} test_init.cpp)
+    if(ZARRAY_USE_XSIMD)
+        target_compile_definitions(${targetname}
+                                   PRIVATE
+                                   XTENSOR_USE_XSIMD)
+        target_link_libraries(${targetname} PRIVATE xsimd)
+    endif()
+    if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
+        add_dependencies(${targetname} gtest_main)
+    endif()
+
+    target_include_directories(${targetname} PRIVATE ${ZARRAY_INCLUDE_DIR})
+    target_link_libraries(${targetname} PRIVATE zarray GTest::GTest GTest::Main ${CMAKE_THREAD_LIBS_INIT})
+    add_custom_target(
+        x${targetname}
+        COMMAND ${targetname}
+        DEPENDS ${targetname} ${filename} ${ZARRAY_HEADERS})
+    add_test(NAME ${targetname} COMMAND ${targetname})
+endforeach()
+
+add_executable(test_zarray_lib ${ZARRAY_TESTS})
+if(ZARRAY_USE_XSIMD)
     target_compile_definitions(test_zarray_lib
                                PRIVATE
-                               ZARRAY_USE_XSIMD)
+                               XTENSOR_USE_XSIMD)
     target_link_libraries(test_zarray_lib PRIVATE xsimd)
 endif()
 
@@ -170,7 +192,7 @@ if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
     add_dependencies(test_zarray_lib gtest_main)
 endif()
 
-target_include_directories(test_zarray_lib PRIVATE ${XTENSOR_INCLUDE_DIR})
+target_include_directories(test_zarray_lib PRIVATE ${ZARRAY_INCLUDE_DIR})
 target_link_libraries(test_zarray_lib PRIVATE zarray GTest::GTest GTest::Main ${CMAKE_THREAD_LIBS_INIT})
 
 add_custom_target(xtest COMMAND test_zarray_lib DEPENDS test_zarray_lib)
