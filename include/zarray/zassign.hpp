@@ -107,6 +107,20 @@ namespace xt
         bool linear_assign = detail::xis_linear_assign<E1, E2>::run(e1.derived_cast(), e2.derived_cast());
         assign_data(e1, e2, linear_assign);
     }
+
+    template <class T, class E2>
+    inline void zassign_wrapped_expression(ztyped_array<T>& lhs, const xexpression<E2>& rhs)
+    {
+        if (lhs.is_array())
+        {
+            zassign_wrapped_expression(lhs.get_array(), rhs);
+        }
+        else
+        {
+            xarray<T> tmp(rhs);
+            lhs.assign(std::move(tmp));
+        }
+    }
 }
 
 #endif

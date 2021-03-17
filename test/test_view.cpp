@@ -59,4 +59,47 @@ namespace xt
 
         EXPECT_EQ(zres.get_array<double>(), expected);
     }
+
+    TEST(zview, assign_strided_view)
+    {
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        xstrided_slice_vector sv({all(), 1});
+        xarray<double> b = {{1., 5.}, {3., 6.}};
+        xarray<double> expected = {{1., 5.}, {3., 6.}};
+
+        zarray za(a), zb(b);
+        strided_view(za, sv) = strided_view(zb, sv);
+        EXPECT_EQ(za.get_array<double>(), expected);
+
+        xarray<double> expected2 = {{2., 5.}, {6., 6.}};
+        xstrided_slice_vector sv2({all(), 0});
+        strided_view(za, sv2) = strided_view(zb, sv2) + strided_view(zb, sv2);
+        EXPECT_EQ(za.get_array<double>(), expected2);
+
+        xarray<double> c = {7., 8.};
+        xarray<double> expected3 = {{7., 8.}, {6., 6.}};
+        xstrided_slice_vector sv3({0, all()});
+        strided_view(za, sv3) = c;
+        EXPECT_EQ(za.get_array<double>(), expected3);
+    }
+
+    TEST(zview, assign_chunked_strided_view)
+    {
+        std::vector<size_t> shape = {4, 4};
+        std::vector<size_t> chunk_shape = {2, 2};
+        std::string chunk_dir = "chunk_dir2";
+        fs::create_directory(chunk_dir);
+        double init_value = 123.456;
+        auto ca = chunked_file_array<double, xio_disk_handler<xio_binary_config>>(shape, chunk_shape, chunk_dir, init_value);
+
+        xarray<double> a = {{1., 2.}, {3., 4.}};
+        xstrided_slice_vector sv({range(2, 4), range(2, 4)});
+        xarray<double> expected = ones<double>({4, 4}) * init_value;
+        strided_view(expected, sv) = a;
+
+        zarray za(ca);
+        strided_view(za, sv) = a;
+
+        EXPECT_EQ(za.get_array<double>(), expected);
+    }
 }

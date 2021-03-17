@@ -99,6 +99,12 @@ namespace xt
         template <class E>
         void init_implementation(const xexpression<E>& e, zarray_expression_tag);
 
+        template <class E>
+        zarray& assign_expression(const xexpression<E>& e, xtensor_expression_tag);
+
+        template <class E>
+        zarray& assign_expression(const xexpression<E>& e, zarray_expression_tag);
+
         implementation_ptr p_impl;
     };
 
@@ -117,6 +123,19 @@ namespace xt
     {
         p_impl = e.derived_cast().allocate_result();
         semantic_base::assign(e);
+    }
+
+    template <class E>
+    inline zarray& zarray::assign_expression(const xexpression<E>& e, xtensor_expression_tag)
+    {
+        zarray tmp(e);
+        return (*this = tmp);
+    }
+
+    template <class E>
+    inline zarray& zarray::assign_expression(const xexpression<E>& e, zarray_expression_tag)
+    {
+        return semantic_base::operator=(e);
     }
 
     inline zarray::zarray(implementation_ptr&& impl)
@@ -174,7 +193,7 @@ namespace xt
     template <class E>
     inline zarray& zarray::operator=(const xexpression<E>& e)
     {
-        return semantic_base::operator=(e);
+        return assign_expression(e, extension::get_expression_tag_t<std::decay_t<E>>());
     }
 
     inline void zarray::swap(zarray& rhs)
