@@ -38,7 +38,7 @@ namespace xt
         template <class T, class R>
         static void run(const ztyped_array<T>& z, ztyped_array<R>& zres)
         {
-            zassign_wrapped_expression(zres.get_array(), z.get_array());
+            zassign_wrapped_expression(zres, z.get_array());
         }
 
         template <class T>
@@ -64,13 +64,24 @@ namespace xt
             // to avoid useless dyanmic allocation if RHS is about
             // to be moved, therefore we have to call it here.
             zres.resize(z.shape());
-            zassign_wrapped_expression(zres.get_array(), z.get_array());
+            zassign_wrapped_expression(zres, z.get_array());
         }
 
         template <class T, class R>
         static enable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres)
         {
-            zres.get_array() = std::move(z.get_array());
+            if (zres.is_array())
+            {
+                ztyped_array<T>& uz = const_cast<ztyped_array<T>&>(z);
+                xarray<T>& ar = uz.get_array();
+                zres.get_array() = std::move(ar);
+                //zres.get_array() = std::move(uz.get_array());
+            }
+            else
+            {
+                ztyped_array<T>& uz = const_cast<ztyped_array<T>&>(z);
+                zres.assign(std::move(uz.get_array()));
+            }
         }
 
         template <class T>
@@ -84,10 +95,10 @@ namespace xt
 #define XTENSOR_UNARY_ZOPERATOR(ZNAME, XOP, XFUN)                                  \
     struct ZNAME                                                                   \
     {                                                                              \
-        template <class T, class  R>                                               \
+        template <class T, class R>                                                \
         static void run(const ztyped_array<T>& z, ztyped_array<R>& zres)           \
         {                                                                          \
-            zassign_wrapped_expression(zres.get_array(), XOP z.get_array());       \
+            zassign_wrapped_expression(zres, XOP z.get_array());                   \
         }                                                                          \
         template <class T>                                                         \
         static size_t index(const ztyped_array<T>&)                                \
@@ -106,7 +117,7 @@ namespace xt
                         const ztyped_array<T2>& z2,                                \
                         ztyped_array<R>& zres)                                     \
         {                                                                          \
-            zassign_wrapped_expression(zres.get_array(),                           \
+            zassign_wrapped_expression(zres,                                       \
                                  z1.get_array() XOP z2.get_array());               \
         }                                                                          \
         template <class T1, class T2>                                              \
@@ -126,7 +137,7 @@ namespace xt
         static void run(const ztyped_array<T>& z,                                  \
                         ztyped_array<R>& zres)                                     \
         {                                                                          \
-            zassign_wrapped_expression(zres.get_array(), XEXP(z.get_array()));     \
+            zassign_wrapped_expression(zres, XEXP(z.get_array()));                 \
         }                                                                          \
         template <class T>                                                         \
         static size_t index(const ztyped_array<T>&)                                \
@@ -145,7 +156,7 @@ namespace xt
                         const ztyped_array<T2>& z2,                                \
                         ztyped_array<R>& zres)                                     \
         {                                                                          \
-            zassign_wrapped_expression(zres.get_array(),                           \
+            zassign_wrapped_expression(zres,                                       \
                                  XEXP(z1.get_array(), z2.get_array()));            \
         }                                                                          \
         template <class T1, class T2>                                              \
