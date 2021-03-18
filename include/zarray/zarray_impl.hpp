@@ -988,15 +988,19 @@ namespace xt
     template <class CTE>
     void zchunked_wrapper<CTE>::resize(const shape_type&)
     {
-        //TODO: check this semantic
-        throw std::runtime_error("Cannot resize chunked wrapper");
+        // This function is called because zarray (and therefore
+        // all the wrappers) implements the container semantic,
+        // whatever it wraps (and it cannot be different, since
+        // the type of the wrappee is erased).
+        // We can see this as a mapping container_semantic => chunked_semantic,
+        // meaning this function call must be authorized, and must not do
+        // anything.
     }
 
     template <class CTE>
     void zchunked_wrapper<CTE>::resize(shape_type&&)
     {
-        //TODO: check this semantic
-        throw std::runtime_error("Cannot resize chunked wrapper");
+        // See comment above.
     }
 
     template <class CTE>
@@ -1030,10 +1034,10 @@ namespace xt
 
     template <class CTE>
     template <class CT>
-    inline detail::disable_const_t<CT> zchunked_wrapper<CTE>::assign_impl(xarray<value_type>&& /*rhs*/)
+    inline detail::disable_const_t<CT> zchunked_wrapper<CTE>::assign_impl(xarray<value_type>&& rhs)
     {
-        throw std::runtime_error("this should work");
-        //m_chunked_array = rhs;
+        //throw std::runtime_error("this should work");
+        m_chunked_array = rhs;
     }
 }
 
