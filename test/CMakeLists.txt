@@ -154,8 +154,9 @@ include_directories(${GTEST_INCLUDE_DIRS} SYSTEM)
 set(ZARRAY_TESTS
     test_init.cpp
     test_zarray.cpp
+    test_zchunked_array.cpp
     test_zfunction.cpp
-    test_view.cpp)
+    test_zview.cpp)
 
 foreach(filename IN LISTS ZARRAY_TESTS)
     string(REPLACE ".cpp" "" targetname ${filename})

@@ -192,19 +192,6 @@ namespace xt
         EXPECT_EQ(sh2, res2);
     }
 
-    // TODO: move to dedicated test file
-    TEST(zarray, chunked_array)
-    {
-        using shape_type =  zarray::shape_type;
-        shape_type shape = {10, 10, 10};
-        shape_type chunk_shape = {2, 3, 4};
-        auto a = chunked_array<double>(shape, chunk_shape);
-
-        zarray za(a);
-        shape_type res = za.as_chunked_array().chunk_shape();
-        EXPECT_EQ(res, chunk_shape);
-    }
-
     TEST(zarray, zarray_assign_xarray)
     {
         auto a1 = xarray<int>();
@@ -238,18 +225,5 @@ namespace xt
         check_xarray_data_type<xtl::half_float>(s + "f2");
         check_xarray_data_type<float>(s + "f4");
         check_xarray_data_type<double>(s + "f8");
-    }
-
-    TEST(zarray, custom_metadata)
-    {
-        using shape_type =  zarray::shape_type;
-        shape_type shape = {4, 4};
-        shape_type chunk_shape = {2, 2};
-        auto a = chunked_array<double, XTENSOR_DEFAULT_LAYOUT>(shape, chunk_shape);
-        zarray z(a);
-        nlohmann::json metadata;
-        metadata["foo"] = "bar";
-        z.set_metadata(metadata);
-        EXPECT_EQ(z.get_metadata()["foo"], "bar");
     }
 }
