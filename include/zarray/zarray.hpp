@@ -80,6 +80,8 @@ namespace xt
         template <class T>
         const xarray<T>& get_array() const;
 
+        void assign_to(zarray_impl& dst) const;
+
         std::size_t dimension() const;
         const shape_type& shape() const;
         void resize(const shape_type& shape);
@@ -221,6 +223,12 @@ namespace xt
     inline const xarray<T>& zarray::get_array() const
     {
         return dynamic_cast<const ztyped_array<T>*>(p_impl.get())->get_array();
+    }
+
+    inline void zarray::assign_to(zarray_impl& dst) const
+    {
+        dst.resize(shape());
+        zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(get_implementation(), dst);
     }
 
     inline std::size_t zarray::dimension() const
