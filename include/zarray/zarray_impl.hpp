@@ -650,7 +650,9 @@ namespace xt
     template <class CT>
     inline auto zexpression_wrapper<CTE>::assign_impl(xarray<value_type>&& rhs) -> enable_assignable_t<CT>
     {
-        m_expression = rhs;
+        // aliasing is handled before this method, therefore we are sure that
+        // m_expression is not involved in rhs.
+        xt::noalias(m_expression) = rhs;
     }
     
     template <class CTE>
@@ -1036,8 +1038,7 @@ namespace xt
     template <class CT>
     inline detail::disable_const_t<CT> zchunked_wrapper<CTE>::assign_impl(xarray<value_type>&& rhs)
     {
-        //throw std::runtime_error("this should work");
-        m_chunked_array = rhs;
+        xt::noalias(m_chunked_array) = rhs;
     }
 }
 

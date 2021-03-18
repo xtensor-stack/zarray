@@ -36,7 +36,17 @@ namespace xt
             static void assign_data(E1& e1, const E2& e2)
             {
                 using value_type = typename E2::value_type;
-                e1.template get_array<value_type>() = e2;
+                using array_type = ztyped_array<value_type>;
+                array_type& ar = dynamic_cast<array_type&>(e1.get_implementation());
+                if (ar.is_array())
+                {
+                    xt::noalias(ar.get_array()) = e2;
+                }
+                else
+                {
+                    xarray<value_type> tmp(e2);
+                    ar.assign(std::move(tmp));
+                }
             }
         };
     }

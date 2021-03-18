@@ -192,7 +192,7 @@ namespace xt
         EXPECT_EQ(sh2, res2);
     }
 
-    TEST(zarray, zarray_assign_xarray)
+    TEST(zarray, assign_xarray)
     {
         auto a1 = xarray<int>();
         auto a2 = xarray<int>({0, 1});
@@ -201,7 +201,16 @@ namespace xt
         EXPECT_EQ(a1, a2);
     }
 
-    TEST(zarray, noalias_zarray_assign_xarray)
+    TEST(zarray, noalias_assign)
+    {
+        auto a1 = xarray<int>();
+        auto a2 = xarray<int>({0, 1});
+        zarray z1(a1), z2(a2);
+        noalias(z1) = z2;
+        EXPECT_EQ(a1, a2);
+    }
+
+    TEST(zarray, noalias_assign_xarray)
     {
         auto a1 = xarray<int>();
         auto a2 = xarray<int>({0, 1});
