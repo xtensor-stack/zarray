@@ -34,7 +34,7 @@ namespace xt
 
         std::size_t dimension() const;
         const shape_type& shape() const;
-        void broadcast_shape(shape_type& shape, bool reuse_cache = false) const;
+        bool broadcast_shape(shape_type& shape, bool reuse_cache = false) const;
 
         std::unique_ptr<zarray_impl> allocate_result() const;
         std::size_t get_result_type_index() const;
@@ -52,9 +52,17 @@ namespace xt
         template <std::size_t... I>
         zarray_impl& assign_to_impl(std::index_sequence<I...>, zarray_impl& res, const zassign_args& args) const;
 
+        struct cache
+        {
+            cache() : m_shape(), m_initialized(false), m_trivial_broadcast(false) {}
+
+            shape_type m_shape;
+            bool m_initialized;
+            bool m_trivial_broadcast;
+        };
+
         tuple_type m_e;
-        mutable shape_type m_cache_shape;
-        mutable bool m_cache_initialized;
+        mutable cache m_cache;
     };
 
     namespace detail
@@ -150,39 +158,40 @@ namespace xt
     template <class Func, class... CTA, class U>
     inline zfunction<F, CT...>::zfunction(Func&&, CTA&&... e) noexcept
         : m_e(std::forward<CTA>(e)...)
-        , m_cache_shape()
-        , m_cache_initialized(false)
+        , m_cache()
     {
     }
 
     template <class F, class... CT>
     inline std::size_t zfunction<F, CT...>::dimension() const
     {
-        return m_cache_initialized ? m_cache_shape.size() : compute_dimension();
+        return m_cache.m_initialized ? m_cache.m_shape.size() : compute_dimension();
     }
 
     template <class F, class... CT>
     inline auto zfunction<F, CT...>::shape() const -> const shape_type&
     {
-        if (!m_cache_initialized)
+        if (!m_cache.m_initialized)
         {
-            m_cache_shape = uninitialized_shape<shape_type>(compute_dimension());
-            broadcast_shape(m_cache_shape, false);
-            m_cache_initialized = true;
+            m_cache.m_shape = uninitialized_shape<shape_type>(compute_dimension());
+            m_cache.m_trivial_broadcast = broadcast_shape(m_cache.m_shape, false);
+            m_cache.m_initialized = true;
         }
-        return m_cache_shape;
+        return m_cache.m_shape;
     }
 
     template <class F, class... CT>
-    inline void zfunction<F, CT...>::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    inline bool zfunction<F, CT...>::broadcast_shape(shape_type& shape, bool reuse_cache) const
     {
-        if (reuse_cache && m_cache_initialized)
+        if (reuse_cache && m_cache.m_initialized)
         {
-            std::copy(m_cache_shape.cbegin(), m_cache_shape.cend(), shape.begin());
+            std::copy(m_cache.m_shape.cbegin(), m_cache.m_shape.cend(), shape.begin());
+            return m_cache.m_trivial_broadcast;
         }
         else
         {
-            for_each([&shape](const auto& e) { e.broadcast_shape(shape); }, m_e);
+            auto func = [&shape](bool b, const auto& e) { return e.broadcast_shape(shape) && b; };
+            return accumulate(func, true, m_e);
         }
     }
     
