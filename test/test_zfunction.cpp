@@ -44,7 +44,8 @@ namespace xt
         zarray za(a);
         zarray zres(res);
 
-        dispatcher_type::dispatch(za.get_implementation(), zres.get_implementation());
+        zassign_args args;
+        dispatcher_type::dispatch(za.get_implementation(), zres.get_implementation(), args);
 
         EXPECT_EQ(expa, res);
     }
@@ -69,7 +70,8 @@ namespace xt
         zarray zres(res);
 
         zfunction_type f(zplus(), za, nested_zfunction_type(zexp(), zb));
-        f.assign_to(zres.get_implementation());
+        zassign_args args;
+        f.assign_to(zres.get_implementation(), args);
 
         auto expected = xarray<double>::from_shape({2, 2});
         std::transform(a.cbegin(), a.cend(), b.cbegin(), expected.begin(),
@@ -98,7 +100,8 @@ namespace xt
         zarray zres(res);
 
         auto f = za + xt::exp(zb);
-        f.assign_to(zres.get_implementation());
+        zassign_args args;
+        f.assign_to(zres.get_implementation(), args);
 
         auto expected = xarray<double>::from_shape({2, 2});
         std::transform(a.cbegin(), a.cend(), b.cbegin(), expected.begin(),

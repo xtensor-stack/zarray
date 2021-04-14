@@ -15,6 +15,10 @@
 
 namespace xt
 {
+    struct zassign_args
+    {
+    };
+
     namespace detail
     {
         template <class Tag>
@@ -22,9 +26,9 @@ namespace xt
         {
             // Both E1 and E2 are zarray expressions
             template <class E1, class E2>
-            static void assign_data(E1& e1, const E2& e2)
+            static void assign_data(E1& e1, const E2& e2, const zassign_args& args)
             {
-                e2.assign_to(e1.get_implementation());
+                e2.assign_to(e1.get_implementation(), args);
             }
         };
 
@@ -33,7 +37,7 @@ namespace xt
         {
             // E1 is a zarray_expression, E2 is an xtensor_expression
             template <class E1, class E2>
-            static void assign_data(E1& e1, const E2& e2)
+            static void assign_data(E1& e1, const E2& e2, const zassign_args&)
             {
                 using value_type = typename E2::value_type;
                 using array_type = ztyped_array<value_type>;
@@ -65,7 +69,8 @@ namespace xt
             auto shape = uninitialized_shape<dynamic_shape<std::size_t>>(size);
             rhs.broadcast_shape(shape, true);
             lhs.resize(std::move(shape));
-            detail::zexpression_assigner<xexpression_tag_t<E2>>::assign_data(lhs, rhs);
+            zassign_args args;
+            detail::zexpression_assigner<xexpression_tag_t<E2>>::assign_data(lhs, rhs, args);
         }
     };
 
@@ -112,18 +117,18 @@ namespace xt
     }
 
     template <class E1, class E2>
-    inline void zassign_wrapped_expression(xexpression<E1>& e1, const xexpression<E2>& e2)
+    inline void zassign_wrapped_expression(xexpression<E1>& e1, const xexpression<E2>& e2, const zassign_args& /*args*/)
     {
         bool linear_assign = detail::xis_linear_assign<E1, E2>::run(e1.derived_cast(), e2.derived_cast());
         assign_data(e1, e2, linear_assign);
     }
 
     template <class T, class E2>
-    inline void zassign_wrapped_expression(ztyped_array<T>& lhs, const xexpression<E2>& rhs)
+    inline void zassign_wrapped_expression(ztyped_array<T>& lhs, const xexpression<E2>& rhs, const zassign_args& args)
     {
         if (lhs.is_array())
         {
-            zassign_wrapped_expression(lhs.get_array(), rhs);
+            zassign_wrapped_expression(lhs.get_array(), rhs, args);
         }
         else
         {
