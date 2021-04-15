@@ -19,10 +19,14 @@ namespace xt
     {
         zassign_args();
         bool trivial_broadcast;
+        xstrided_slice_vector slices;
+        size_t chunk_index;
     };
 
     inline zassign_args::zassign_args()
         : trivial_broadcast(false)
+        , slices()
+        , chunk_index(0u)
     {
     }
 
@@ -33,9 +37,23 @@ namespace xt
         {
             // Both E1 and E2 are zarray expressions
             template <class E1, class E2>
-            static void assign_data(E1& e1, const E2& e2, const zassign_args& args)
+            static void assign_data(E1& e1, const E2& e2, zassign_args& args)
             {
-                e2.assign_to(e1.get_implementation(), args);
+                if (e1.get_implementation().is_chunked())
+                {
+                    const zchunked_array& arr = e1.as_chunked_array();
+                    size_t grid_size = arr.grid_size();
+                    for (size_t i = 0; i < grid_size; ++i)
+                    {
+                        args.slices = arr.get_slice_vector(i);
+                        args.chunk_index = i;
+                        e2.assign_to(e1.get_implementation(), args);
+                    }
+                }
+                else
+                {
+                    e2.assign_to(e1.get_implementation(), args);
+                }
             }
         };
 
@@ -44,7 +62,7 @@ namespace xt
         {
             // E1 is a zarray_expression, E2 is an xtensor_expression
             template <class E1, class E2>
-            static void assign_data(E1& e1, const E2& e2, const zassign_args&)
+            static void assign_data(E1& e1, const E2& e2, zassign_args& /*args*/)
             {
                 using value_type = typename E2::value_type;
                 using array_type = ztyped_array<value_type>;
@@ -52,6 +70,15 @@ namespace xt
                 if (ar.is_array())
                 {
                     xt::noalias(ar.get_array()) = e2;
+                }
+                else if (ar.is_chunked())
+                {
+                    const zchunked_array& zc = e1.as_chunked_array();
+                    size_t grid_size = zc.grid_size();
+                    for (size_t i = 0; i < grid_size; ++i)
+                    {
+                        ar.assign_chunk(strided_view(e2, zc.get_slice_vector(i)), i);
+                    }
                 }
                 else
                 {
@@ -97,6 +124,11 @@ namespace xt
         if (lhs.is_array())
         {
             zassign_wrapped_expression(lhs.get_array(), rhs, args);
+        }
+        else if (!args.slices.empty())
+        {
+            xarray<T> tmp(rhs);
+            lhs.assign_chunk(std::move(tmp), args.chunk_index); 
         }
         else
         {
