@@ -19,6 +19,7 @@
 #include <xtensor/xshape.hpp>
 #include <xtensor/xshape.hpp>
 #include "xtensor/xstrided_view.hpp"
+#include "xtensor/xchunked_view.hpp"
 
 namespace xt
 {
@@ -343,8 +344,8 @@ namespace xt
 
         template <class CT = CTE>
         enable_assignable_t<CT> assign_impl(xarray<value_type>&& rhs);
-        
-        template <class CT = CTE>   
+
+        template <class CT = CTE>
         enable_not_assignable_t<CT> assign_impl(xarray<value_type>&& rhs);
 
         template <class CT = CTE>
@@ -406,7 +407,7 @@ namespace xt
     private:
 
         zscalar_wrapper(const zscalar_wrapper&) = default;
-        
+
         CTE m_expression;
         xarray<value_type> m_array;
         nlohmann::json m_metadata;
@@ -538,13 +539,13 @@ namespace xt
 
         template <class CT = CTE>
         detail::disable_const_t<CT> assign_impl(xarray<value_type>&& rhs);
-        
+
         template <class CT = CTE>
         detail::enable_const_t<CT> assign_chunk_impl(xarray<value_type>&& rhs, size_t chunk_index);
 
         template <class CT = CTE>
         detail::disable_const_t<CT> assign_chunk_impl(xarray<value_type>&& rhs, size_t chunk_index);
-        
+
         CTE m_chunked_array;
         shape_type m_chunk_shape;
         mutable xarray<value_type> m_cache;
@@ -693,7 +694,7 @@ namespace xt
             m_cache_initialized = true;
         }
     }
-    
+
     template <class CTE>
     template <class CT>
     inline auto zexpression_wrapper<CTE>::assign_impl(xarray<value_type>&& rhs) -> enable_assignable_t<CT>
@@ -702,14 +703,14 @@ namespace xt
         // m_expression is not involved in rhs.
         xt::noalias(m_expression) = rhs;
     }
-    
+
     template <class CTE>
-    template <class CT>   
+    template <class CT>
     inline auto zexpression_wrapper<CTE>::assign_impl(xarray<value_type>&&) -> enable_not_assignable_t<CT>
     {
         throw std::runtime_error("unevaluated expression is not assignable");
     }
-    
+
     template <class CTE>
     template <class CT>
     inline auto zexpression_wrapper<CTE>::resize_impl() -> enable_assignable_t<CT>
@@ -723,7 +724,7 @@ namespace xt
     {
         throw std::runtime_error("cannot resize not assignable expression wrapper");
     }
-    
+
     /*******************
      * zscalar_wrapper *
      *******************/
@@ -834,7 +835,7 @@ namespace xt
     {
         return m_array.broadcast_shape(shape, reuse_cache);
     }
-    
+
     /******************
      * zarray_wrapper *
      ******************/
@@ -973,7 +974,7 @@ namespace xt
     {
         return m_array.broadcast_shape(shape, reuse_cache);
     }
-    
+
     template <class CTE>
     template <class CT>
     inline detail::enable_const_t<CT> zarray_wrapper<CTE>::assign_impl(xarray<value_type>&&)
@@ -987,7 +988,7 @@ namespace xt
     {
         m_array = std::move(rhs);
     }
-   
+
     /********************
      * zchunked_wrapper *
      ********************/
@@ -1129,7 +1130,7 @@ namespace xt
         std::advance(it, chunk_index);
         return it.get_slice_vector();
     }
-    
+
     template <class CTE>
     auto zchunked_wrapper<CTE>::chunk_shape() const -> const shape_type&
     {
@@ -1141,7 +1142,8 @@ namespace xt
     {
         if (!m_cache_initialized)
         {
-            m_cache = m_chunked_array;
+            m_cache.resize(m_chunked_array.shape());
+            as_chunked(m_cache,  m_chunked_array.chunk_shape()) = m_chunked_array;
             m_cache_initialized = true;
         }
     }
