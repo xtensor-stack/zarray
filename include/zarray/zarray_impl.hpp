@@ -32,35 +32,10 @@ namespace xt
     template <class CTE>
     class zexpression_wrapper;
 
-    namespace detail
-    {
-        template <class E>
-        struct is_xstrided_view : std::false_type
-        {
-        };
-
-        template <class CT, class S, layout_type L, class FST>
-        struct is_xstrided_view<xstrided_view<CT, S, L, FST>> : std::true_type
-        {
-        };
-
-        template <class CT>
-        using is_const = std::is_const<std::remove_reference_t<CT>>;
-
-        template <class CT, class R = void>
-        using disable_xstrided_view_t = std::enable_if_t<!is_xstrided_view<CT>::value || is_const<CT>::value, R>;
-
-        template <class CT, class R = void>
-        using enable_const_t = std::enable_if_t<is_const<CT>::value, R>;
-
-        template <class CT, class R = void>
-        using disable_const_t = std::enable_if_t<!is_const<CT>::value, R>;
-    }
-
     /******************
      * zarray builder *
      ******************/
-
+    
     namespace detail
     {
         template <class E>
@@ -80,6 +55,16 @@ namespace xt
 
         template <class CS>
         struct is_chunked_array<xchunked_array<CS>> : std::true_type
+        {
+        };
+
+        template <class E>
+        struct is_xstrided_view : std::false_type
+        {
+        };
+
+        template <class CT, class S, layout_type L, class FST>
+        struct is_xstrided_view<xstrided_view<CT, S, L, FST>> : std::true_type
         {
         };
 
@@ -107,85 +92,18 @@ namespace xt
         {
             return zwrapper_builder<E>::run(std::forward<E>(e));
         }
-    }
 
-    const std::string endianness_string = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
+        template <class CT>
+        using is_const = std::is_const<std::remove_reference_t<CT>>;
 
-    template <class T>
-    inline void set_data_type(nlohmann::json& metadata)
-    {
-    }
+        template <class CT, class R = void>
+        using disable_xstrided_view_t = std::enable_if_t<!is_xstrided_view<CT>::value || is_const<CT>::value, R>;
 
-    template <>
-    inline void set_data_type<bool>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = "bool";
-    }
+        template <class CT, class R = void>
+        using enable_const_t = std::enable_if_t<is_const<CT>::value, R>;
 
-    template <>
-    inline void set_data_type<uint8_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = "u1";
-    }
-
-    template <>
-    inline void set_data_type<int8_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = "i1";
-    }
-
-    template <>
-    inline void set_data_type<int16_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "i2";
-    }
-
-    template <>
-    inline void set_data_type<uint16_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "u2";
-    }
-
-    template <>
-    inline void set_data_type<int32_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "i4";
-    }
-
-    template <>
-    inline void set_data_type<uint32_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "u4";
-    }
-
-    template <>
-    inline void set_data_type<int64_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "i8";
-    }
-
-    template <>
-    inline void set_data_type<uint64_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "u8";
-    }
-
-    template <>
-    inline void set_data_type<xtl::half_float>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "f2";
-    }
-
-    template <>
-    inline void set_data_type<float>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "f4";
-    }
-
-    template <>
-    inline void set_data_type<double>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "f8";
+        template <class CT, class R = void>
+        using disable_const_t = std::enable_if_t<!is_const<CT>::value, R>;
     }
 
     /*************************
@@ -557,6 +475,96 @@ namespace xt
 
     };
 
+    /*****************
+     * set_data_type *
+     *****************/
+
+    namespace detail
+    {
+        inline const std::string endianness_string()
+        {
+            static std::string endianness = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
+            return endianness;
+        }
+
+        template <class T>
+        inline void set_data_type(nlohmann::json& metadata)
+        {
+        }
+
+        template <>
+        inline void set_data_type<bool>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = "bool";
+        }
+
+        template <>
+        inline void set_data_type<uint8_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = "u1";
+        }
+
+        template <>
+        inline void set_data_type<int8_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = "i1";
+        }
+
+        template <>
+        inline void set_data_type<int16_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "i2";
+        }
+
+        template <>
+        inline void set_data_type<uint16_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "u2";
+        }
+
+        template <>
+        inline void set_data_type<int32_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "i4";
+        }
+
+        template <>
+        inline void set_data_type<uint32_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "u4";
+        }
+
+        template <>
+        inline void set_data_type<int64_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "i8";
+        }
+
+        template <>
+        inline void set_data_type<uint64_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "u8";
+        }
+
+        template <>
+        inline void set_data_type<xtl::half_float>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "f2";
+        }
+
+        template <>
+        inline void set_data_type<float>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "f4";
+        }
+
+        template <>
+        inline void set_data_type<double>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "f8";
+        }
+    }
+
     /***********************
      * zexpression_wrapper *
      ***********************/
@@ -569,7 +577,7 @@ namespace xt
         , m_cache()
         , m_cache_initialized(false)
     {
-        set_data_type<value_type>(m_metadata);
+        detail::set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -736,7 +744,7 @@ namespace xt
         , m_expression(std::forward<E>(e))
         , m_array(m_expression())
     {
-        set_data_type<value_type>(m_metadata);
+        detail::set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -875,7 +883,7 @@ namespace xt
         : base_type()
         , m_array(std::forward<E>(e))
     {
-        set_data_type<value_type>(m_metadata);
+        detail::set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -1006,7 +1014,7 @@ namespace xt
         std::copy(m_chunked_array.chunk_shape().begin(),
                   m_chunked_array.chunk_shape().end(),
                   m_chunk_shape.begin());
-        set_data_type<value_type>(m_metadata);
+        detail::set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
