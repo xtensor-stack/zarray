@@ -32,35 +32,10 @@ namespace xt
     template <class CTE>
     class zexpression_wrapper;
 
-    namespace detail
-    {
-        template <class E>
-        struct is_xstrided_view : std::false_type
-        {
-        };
-
-        template <class CT, class S, layout_type L, class FST>
-        struct is_xstrided_view<xstrided_view<CT, S, L, FST>> : std::true_type
-        {
-        };
-
-        template <class CT>
-        using is_const = std::is_const<std::remove_reference_t<CT>>;
-
-        template <class CT, class R = void>
-        using disable_xstrided_view_t = std::enable_if_t<!is_xstrided_view<CT>::value || is_const<CT>::value, R>;
-
-        template <class CT, class R = void>
-        using enable_const_t = std::enable_if_t<is_const<CT>::value, R>;
-
-        template <class CT, class R = void>
-        using disable_const_t = std::enable_if_t<!is_const<CT>::value, R>;
-    }
-
     /******************
      * zarray builder *
      ******************/
-
+    
     namespace detail
     {
         template <class E>
@@ -80,6 +55,16 @@ namespace xt
 
         template <class CS>
         struct is_chunked_array<xchunked_array<CS>> : std::true_type
+        {
+        };
+
+        template <class E>
+        struct is_xstrided_view : std::false_type
+        {
+        };
+
+        template <class CT, class S, layout_type L, class FST>
+        struct is_xstrided_view<xstrided_view<CT, S, L, FST>> : std::true_type
         {
         };
 
@@ -107,85 +92,18 @@ namespace xt
         {
             return zwrapper_builder<E>::run(std::forward<E>(e));
         }
-    }
 
-    const std::string endianness_string = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
+        template <class CT>
+        using is_const = std::is_const<std::remove_reference_t<CT>>;
 
-    template <class T>
-    inline void set_data_type(nlohmann::json& metadata)
-    {
-    }
+        template <class CT, class R = void>
+        using disable_xstrided_view_t = std::enable_if_t<!is_xstrided_view<CT>::value || is_const<CT>::value, R>;
 
-    template <>
-    inline void set_data_type<bool>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = "bool";
-    }
+        template <class CT, class R = void>
+        using enable_const_t = std::enable_if_t<is_const<CT>::value, R>;
 
-    template <>
-    inline void set_data_type<uint8_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = "u1";
-    }
-
-    template <>
-    inline void set_data_type<int8_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = "i1";
-    }
-
-    template <>
-    inline void set_data_type<int16_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "i2";
-    }
-
-    template <>
-    inline void set_data_type<uint16_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "u2";
-    }
-
-    template <>
-    inline void set_data_type<int32_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "i4";
-    }
-
-    template <>
-    inline void set_data_type<uint32_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "u4";
-    }
-
-    template <>
-    inline void set_data_type<int64_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "i8";
-    }
-
-    template <>
-    inline void set_data_type<uint64_t>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "u8";
-    }
-
-    template <>
-    inline void set_data_type<xtl::half_float>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "f2";
-    }
-
-    template <>
-    inline void set_data_type<float>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "f4";
-    }
-
-    template <>
-    inline void set_data_type<double>(nlohmann::json& metadata)
-    {
-        metadata["data_type"] = endianness_string + "f8";
+        template <class CT, class R = void>
+        using disable_const_t = std::enable_if_t<!is_const<CT>::value, R>;
     }
 
     /*************************
@@ -232,13 +150,16 @@ namespace xt
         zarray_impl& operator=(const zarray_impl&) = delete;
         zarray_impl& operator=(zarray_impl&&) = delete;
 
-        virtual bool is_chunked() const = 0;
         virtual self_type* clone() const = 0;
+
+        virtual bool is_array() const = 0;
+        virtual bool is_chunked() const = 0;
 
         virtual self_type* strided_view(xstrided_slice_vector& slices) = 0;
 
         virtual const nlohmann::json& get_metadata() const = 0;
         virtual void set_metadata(const nlohmann::json& metadata) = 0;
+
         virtual std::size_t dimension() const = 0;
         virtual const shape_type& shape() const = 0;
         virtual void resize(const shape_type& shape) = 0;
@@ -268,14 +189,11 @@ namespace xt
 
         virtual ~ztyped_array() = default;
 
-        virtual bool is_array() const = 0;
-
         virtual xarray<T>& get_array() = 0;
         virtual const xarray<T>& get_array() const = 0;
         virtual xarray<T> get_chunk(const slice_vector& slices) const = 0;
 
         virtual void assign(xarray<T>&& rhs) = 0;
-        virtual void assign_chunk(xarray<T>&& rhs, size_t chunk_index) = 0;
 
         XTL_IMPLEMENT_INDEXABLE_CLASS()
 
@@ -313,7 +231,6 @@ namespace xt
         xarray<value_type> get_chunk(const slice_vector& slices) const override;
 
         void assign(xarray<value_type>&& rhs) override;
-        void assign_chunk(xarray<value_type>&& rhs, size_t chunk_index) override;
 
         self_type* clone() const override;
 
@@ -390,7 +307,6 @@ namespace xt
         xarray<value_type> get_chunk(const slice_vector& slices) const override;
 
         void assign(xarray<value_type>&& rhs) override;
-        void assign_chunk(xarray<value_type>&& rhs, size_t chunk_index) override;
 
         self_type* clone() const override;
 
@@ -441,7 +357,6 @@ namespace xt
         xarray<value_type> get_chunk(const slice_vector& slices) const override;
 
         void assign(xarray<value_type>&& rhs) override;
-        void assign_chunk(xarray<value_type>&& rhs, size_t chunk_index) override;
 
         self_type* clone() const override;
 
@@ -485,15 +400,27 @@ namespace xt
         virtual xstrided_slice_vector get_slice_vector(size_t chunk_index) const = 0;
     };
 
+    template <class T>
+    class ztyped_chunked_array : public ztyped_array<T>,
+                                 public zchunked_array
+    {
+    public:
+
+        using value_type = T;
+
+        virtual ~ztyped_chunked_array() = default;
+
+        virtual void assign_chunk(xarray<value_type>&& rhs, size_t chunk_index) = 0;
+    };
+
     template <class CTE>
-    class zchunked_wrapper : public ztyped_array<typename std::decay_t<CTE>::value_type>,
-                             public zchunked_array
+    class zchunked_wrapper : public ztyped_chunked_array<typename std::decay_t<CTE>::value_type>
     {
     public:
 
         using self_type = zchunked_wrapper;
-        using value_type = typename std::decay_t<CTE>::value_type;
-        using base_type = ztyped_array<value_type>;
+        using base_type = ztyped_chunked_array<typename std::decay_t<CTE>::value_type>;
+        using value_type = typename base_type::value_type;
         using shape_type = zchunked_array::shape_type;
         using slice_vector = typename base_type::slice_vector;
 
@@ -557,6 +484,96 @@ namespace xt
 
     };
 
+    /*****************
+     * set_data_type *
+     *****************/
+
+    namespace detail
+    {
+        inline const std::string endianness_string()
+        {
+            static std::string endianness = (xtl::endianness() == xtl::endian::little_endian) ? "<" : ">";
+            return endianness;
+        }
+
+        template <class T>
+        inline void set_data_type(nlohmann::json& metadata)
+        {
+        }
+
+        template <>
+        inline void set_data_type<bool>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = "bool";
+        }
+
+        template <>
+        inline void set_data_type<uint8_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = "u1";
+        }
+
+        template <>
+        inline void set_data_type<int8_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = "i1";
+        }
+
+        template <>
+        inline void set_data_type<int16_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "i2";
+        }
+
+        template <>
+        inline void set_data_type<uint16_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "u2";
+        }
+
+        template <>
+        inline void set_data_type<int32_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "i4";
+        }
+
+        template <>
+        inline void set_data_type<uint32_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "u4";
+        }
+
+        template <>
+        inline void set_data_type<int64_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "i8";
+        }
+
+        template <>
+        inline void set_data_type<uint64_t>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "u8";
+        }
+
+        template <>
+        inline void set_data_type<xtl::half_float>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "f2";
+        }
+
+        template <>
+        inline void set_data_type<float>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "f4";
+        }
+
+        template <>
+        inline void set_data_type<double>(nlohmann::json& metadata)
+        {
+            metadata["data_type"] = endianness_string() + "f8";
+        }
+    }
+
     /***********************
      * zexpression_wrapper *
      ***********************/
@@ -569,7 +586,7 @@ namespace xt
         , m_cache()
         , m_cache_initialized(false)
     {
-        set_data_type<value_type>(m_metadata);
+        detail::set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -608,12 +625,6 @@ namespace xt
     void zexpression_wrapper<CTE>::assign(xarray<value_type>&& rhs)
     {
         assign_impl(std::move(rhs));
-    }
-
-    template <class CTE>
-    void zexpression_wrapper<CTE>::assign_chunk(xarray<value_type>&&, size_t)
-    {
-        throw std::runtime_error("expression wrapper is not chunked assignable");
     }
 
     template <class CTE>
@@ -736,7 +747,7 @@ namespace xt
         , m_expression(std::forward<E>(e))
         , m_array(m_expression())
     {
-        set_data_type<value_type>(m_metadata);
+        detail::set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -773,12 +784,6 @@ namespace xt
     void zscalar_wrapper<CTE>::assign(xarray<value_type>&&)
     {
         throw std::runtime_error("scalar cannot be assigned an array");
-    }
-
-    template <class CTE>
-    void zscalar_wrapper<CTE>::assign_chunk(xarray<value_type>&&, size_t)
-    {
-        throw std::runtime_error("scalar wrapper is not chunked assignable");
     }
 
     template <class CTE>
@@ -875,7 +880,7 @@ namespace xt
         : base_type()
         , m_array(std::forward<E>(e))
     {
-        set_data_type<value_type>(m_metadata);
+        detail::set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>
@@ -912,12 +917,6 @@ namespace xt
     void zarray_wrapper<CTE>::assign(xarray<value_type>&& rhs)
     {
         assign_impl(std::move(rhs));
-    }
-
-    template <class CTE>
-    void zarray_wrapper<CTE>::assign_chunk(xarray<value_type>&&, size_t)
-    {
-        throw std::runtime_error("array wrapper is not chunked assignable");
     }
 
     template <class CTE>
@@ -1006,7 +1005,7 @@ namespace xt
         std::copy(m_chunked_array.chunk_shape().begin(),
                   m_chunked_array.chunk_shape().end(),
                   m_chunk_shape.begin());
-        set_data_type<value_type>(m_metadata);
+        detail::set_data_type<value_type>(m_metadata);
     }
 
     template <class CTE>

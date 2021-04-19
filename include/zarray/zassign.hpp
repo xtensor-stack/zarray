@@ -65,23 +65,27 @@ namespace xt
             static void assign_data(E1& e1, const E2& e2, zassign_args& /*args*/)
             {
                 using value_type = typename E2::value_type;
-                using array_type = ztyped_array<value_type>;
-                array_type& ar = dynamic_cast<array_type&>(e1.get_implementation());
-                if (ar.is_array())
+                zarray_impl& impl = e1.get_implementation();
+                if (impl.is_array())
                 {
+                    using array_type = ztyped_array<value_type>;
+                    array_type& ar = static_cast<array_type&>(impl);
                     xt::noalias(ar.get_array()) = e2;
                 }
-                else if (ar.is_chunked())
+                else if (impl.is_chunked())
                 {
-                    const zchunked_array& zc = e1.as_chunked_array();
-                    size_t grid_size = zc.grid_size();
+                    using array_type = ztyped_chunked_array<value_type>;
+                    array_type& ar = static_cast<array_type&>(impl);
+                    size_t grid_size = ar.grid_size();
                     for (size_t i = 0; i < grid_size; ++i)
                     {
-                        ar.assign_chunk(strided_view(e2, zc.get_slice_vector(i)), i);
+                        ar.assign_chunk(strided_view(e2, ar.get_slice_vector(i)), i);
                     }
                 }
                 else
                 {
+                    using array_type = ztyped_array<value_type>;
+                    array_type& ar = static_cast<array_type&>(impl);
                     xarray<value_type> tmp(e2);
                     ar.assign(std::move(tmp));
                 }
@@ -128,7 +132,8 @@ namespace xt
         else if (!args.slices.empty())
         {
             xarray<T> tmp(rhs);
-            lhs.assign_chunk(std::move(tmp), args.chunk_index); 
+            auto& chunked_lhs = static_cast<ztyped_chunked_array<T>&>(lhs);
+            chunked_lhs.assign_chunk(std::move(tmp), args.chunk_index); 
         }
         else
         {
