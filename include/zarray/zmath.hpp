@@ -38,7 +38,10 @@ namespace xt
         template <class T, class R>
         static void run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args& args)
         {
-            zassign_wrapped_expression(zres, z.get_array(), args);
+            if (args.slices.empty())
+                zassign_wrapped_expression(zres, z.get_array(), args);
+            else
+                zassign_wrapped_expression(zres,  z.get_chunk(args.slices), args);
         }
 
         template <class T>
@@ -64,7 +67,10 @@ namespace xt
             // to avoid useless dyanmic allocation if RHS is about
             // to be moved, therefore we have to call it here.
             zres.resize(z.shape());
-            zassign_wrapped_expression(zres, z.get_array(), args);
+            if (args.slices.empty())
+                zassign_wrapped_expression(zres, z.get_array(), args);
+            else
+                zassign_wrapped_expression(zres, z.get_chunk(args.slices), args);
         }
 
         template <class T, class R>
@@ -75,7 +81,6 @@ namespace xt
                 ztyped_array<T>& uz = const_cast<ztyped_array<T>&>(z);
                 xarray<T>& ar = uz.get_array();
                 zres.get_array() = std::move(ar);
-                //zres.get_array() = std::move(uz.get_array());
             }
             else
             {

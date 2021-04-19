@@ -1126,7 +1126,7 @@ namespace xt
         // TODO: this is awful and should be replaced with a dynamic iterator wrapping
         // the chunk iterator of the underlying chunked array.
         auto it = m_chunked_array.chunk_begin();
-        for (size_t i = 0; i < chunk_index; ++i) { ++it; }
+        std::advance(it, chunk_index);
         return it.get_slice_vector();
     }
     
@@ -1167,13 +1167,28 @@ namespace xt
         throw std::runtime_error("const array is not assignable");
     }
 
+    template <class S>
+    void print_shape(const S& shape)
+    {
+        for (auto s: shape) { std::cout << s << ", "; }
+        std::cout << std::endl;
+    }
+
     template <class CTE>
     template <class CT>
     inline detail::disable_const_t<CT> zchunked_wrapper<CTE>::assign_chunk_impl(xarray<value_type>&& rhs, size_t chunk_index)
     {
         auto it = m_chunked_array.chunk_begin();
-        for (size_t i = 0; i < chunk_index; ++i) { ++it; }
-        xt::noalias(*it) = rhs;
+        std::advance(it, chunk_index);
+        const auto& chunk_shape = m_chunked_array.chunk_shape();
+        if (rhs.shape() != chunk_shape)
+        {
+            xt::noalias(xt::strided_view(*it, it.get_chunk_slice_vector())) = rhs;
+        }
+        else
+        {
+            xt::noalias(*it) = rhs;
+        }
     }
 }
 
