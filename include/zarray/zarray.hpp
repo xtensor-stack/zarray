@@ -80,13 +80,13 @@ namespace xt
         template <class T>
         const xarray<T>& get_array() const;
 
-        void assign_to(zarray_impl& dst) const;
+        void assign_to(zarray_impl& dst, const zassign_args& args) const;
 
         std::size_t dimension() const;
         const shape_type& shape() const;
         void resize(const shape_type& shape);
         void resize(shape_type&& shape);
-        void broadcast_shape(shape_type& shape, bool reuse_cache = false) const;
+        bool broadcast_shape(shape_type& shape, bool reuse_cache = false) const;
 
         const zchunked_array& as_chunked_array() const;
 
@@ -159,7 +159,9 @@ namespace xt
     inline zarray& zarray::operator=(const zarray& rhs)
     {
         resize(rhs.shape());
-        zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl);
+        zassign_args args;
+        args.trivial_broadcast = true;
+        zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
         return *this;
     }
 
@@ -170,7 +172,9 @@ namespace xt
 
     inline zarray& zarray::operator=(zarray&& rhs)
     {
-        zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl);
+        zassign_args args;
+        args.trivial_broadcast = true;
+        zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
         return *this;
     }
 
@@ -225,10 +229,10 @@ namespace xt
         return dynamic_cast<const ztyped_array<T>*>(p_impl.get())->get_array();
     }
 
-    inline void zarray::assign_to(zarray_impl& dst) const
+    inline void zarray::assign_to(zarray_impl& dst, const zassign_args& args) const
     {
         dst.resize(shape());
-        zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(get_implementation(), dst);
+        zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(get_implementation(), dst, args);
     }
 
     inline std::size_t zarray::dimension() const
@@ -251,9 +255,9 @@ namespace xt
         p_impl->resize(std::move(shape));
     }
 
-    inline void zarray::broadcast_shape(shape_type& shape, bool reuse_cache) const
+    inline bool zarray::broadcast_shape(shape_type& shape, bool reuse_cache) const
     {
-        p_impl->broadcast_shape(shape, reuse_cache);
+        return p_impl->broadcast_shape(shape, reuse_cache);
     }
 
     inline const zchunked_array& zarray::as_chunked_array() const

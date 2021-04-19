@@ -15,6 +15,21 @@
 
 namespace xt
 {
+    struct zassign_args
+    {
+        zassign_args();
+        bool trivial_broadcast;
+        xstrided_slice_vector slices;
+        size_t chunk_index;
+    };
+
+    inline zassign_args::zassign_args()
+        : trivial_broadcast(false)
+        , slices()
+        , chunk_index(0u)
+    {
+    }
+
     namespace detail
     {
         template <class Tag>
@@ -22,9 +37,23 @@ namespace xt
         {
             // Both E1 and E2 are zarray expressions
             template <class E1, class E2>
-            static void assign_data(E1& e1, const E2& e2)
+            static void assign_data(E1& e1, const E2& e2, zassign_args& args)
             {
-                e2.assign_to(e1.get_implementation());
+                if (e1.get_implementation().is_chunked())
+                {
+                    const zchunked_array& arr = e1.as_chunked_array();
+                    size_t grid_size = arr.grid_size();
+                    for (size_t i = 0; i < grid_size; ++i)
+                    {
+                        args.slices = arr.get_slice_vector(i);
+                        args.chunk_index = i;
+                        e2.assign_to(e1.get_implementation(), args);
+                    }
+                }
+                else
+                {
+                    e2.assign_to(e1.get_implementation(), args);
+                }
             }
         };
 
@@ -33,7 +62,7 @@ namespace xt
         {
             // E1 is a zarray_expression, E2 is an xtensor_expression
             template <class E1, class E2>
-            static void assign_data(E1& e1, const E2& e2)
+            static void assign_data(E1& e1, const E2& e2, zassign_args& /*args*/)
             {
                 using value_type = typename E2::value_type;
                 using array_type = ztyped_array<value_type>;
@@ -41,6 +70,15 @@ namespace xt
                 if (ar.is_array())
                 {
                     xt::noalias(ar.get_array()) = e2;
+                }
+                else if (ar.is_chunked())
+                {
+                    const zchunked_array& zc = e1.as_chunked_array();
+                    size_t grid_size = zc.grid_size();
+                    for (size_t i = 0; i < grid_size; ++i)
+                    {
+                        ar.assign_chunk(strided_view(e2, zc.get_slice_vector(i)), i);
+                    }
                 }
                 else
                 {
@@ -63,9 +101,10 @@ namespace xt
             const E2& rhs = e2.derived_cast();
             std::size_t size = rhs.dimension();
             auto shape = uninitialized_shape<dynamic_shape<std::size_t>>(size);
-            rhs.broadcast_shape(shape, true);
+            zassign_args args;
+            args.trivial_broadcast = rhs.broadcast_shape(shape, true);
             lhs.resize(std::move(shape));
-            detail::zexpression_assigner<xexpression_tag_t<E2>>::assign_data(lhs, rhs);
+            detail::zexpression_assigner<xexpression_tag_t<E2>>::assign_data(lhs, rhs, args);
         }
     };
 
@@ -73,57 +112,23 @@ namespace xt
      * zassign_wrapped_expression *
      ******************************/
 
-    namespace detail
-    {
-        // The shape of lhs (and thus whether the assign is linear)
-        // is computed before the dynamic dispatch, thus the information
-        // is lost. However, since xtensor wrapped expressions are precomputed
-        // in xarray objects with default layout, comparing the shapes of the
-        // different operands of an expression is enough to decide whether
-        // the assign should be linear or not.
-        template <class LHS, class RHS>
-        struct xis_linear_assign
-        {
-            static bool run(const LHS&, const RHS&)
-            {
-                return false;
-            }
-        };
-
-        template <class LHS, class T>
-        struct xis_linear_assign<LHS, xarray<T>>
-        {
-            static bool run(const LHS& lhs, const xarray<T>& rhs)
-            {
-                return lhs.shape() == rhs.shape();
-            }
-        };
-
-        template <class LHS, class F, class... CT>
-        struct xis_linear_assign<LHS, xfunction<F, CT...>>
-        {
-            static bool run(const LHS& lhs, const xfunction<F, CT...>& rhs)
-            {
-                const auto& shape = lhs.shape();
-                auto f = [&shape](bool b, const auto& e) { return b && shape == e.shape(); };
-                return accumulate(f, true, rhs.arguments());
-            }
-        };
-    }
-
     template <class E1, class E2>
-    inline void zassign_wrapped_expression(xexpression<E1>& e1, const xexpression<E2>& e2)
+    inline void zassign_wrapped_expression(xexpression<E1>& e1, const xexpression<E2>& e2, const zassign_args& args)
     {
-        bool linear_assign = detail::xis_linear_assign<E1, E2>::run(e1.derived_cast(), e2.derived_cast());
-        assign_data(e1, e2, linear_assign);
+        assign_data(e1, e2, args.trivial_broadcast);
     }
 
     template <class T, class E2>
-    inline void zassign_wrapped_expression(ztyped_array<T>& lhs, const xexpression<E2>& rhs)
+    inline void zassign_wrapped_expression(ztyped_array<T>& lhs, const xexpression<E2>& rhs, const zassign_args& args)
     {
         if (lhs.is_array())
         {
-            zassign_wrapped_expression(lhs.get_array(), rhs);
+            zassign_wrapped_expression(lhs.get_array(), rhs, args);
+        }
+        else if (!args.slices.empty())
+        {
+            xarray<T> tmp(rhs);
+            lhs.assign_chunk(std::move(tmp), args.chunk_index); 
         }
         else
         {

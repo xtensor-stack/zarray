@@ -19,7 +19,7 @@ namespace xt
 {
     namespace mpl = xtl::mpl;
 
-    template <class type_list, class undispatched_type_list = mpl::vector<>>
+    template <class type_list, class undispatched_type_list = mpl::vector<const zassign_args>>
     using zrun_dispatcher_impl = xtl::functor_dispatcher
     <
         type_list,
@@ -59,7 +59,7 @@ namespace xt
         static void register_dispatching(mpl::vector<mpl::vector<T, R>, U...>);
 
         static void init();
-        static void dispatch(const zarray_impl& z1, zarray_impl& res);
+        static void dispatch(const zarray_impl& z1, zarray_impl& res, const zassign_args& args);
         static size_t get_type_index(const zarray_impl& z1);
 
     private:
@@ -104,7 +104,10 @@ namespace xt
         static void register_dispatching(mpl::vector<mpl::vector<T1, T2, R>, U...>);
 
         static void init();
-        static void dispatch(const zarray_impl& z1, const zarray_impl& z2, zarray_impl& res);
+        static void dispatch(const zarray_impl& z1,
+                             const zarray_impl& z2,
+                             zarray_impl& res,
+                             const zassign_args& args);
         static size_t get_type_index(const zarray_impl& z1, const zarray_impl& z2);
 
     private:
@@ -279,9 +282,9 @@ namespace xt
     }
 
     template <class F>
-    inline void zdouble_dispatcher<F>::dispatch(const zarray_impl& z1, zarray_impl& res)
+    inline void zdouble_dispatcher<F>::dispatch(const zarray_impl& z1, zarray_impl& res, const zassign_args& args)
     {
-        instance().m_run_dispatcher.dispatch(z1, res);
+        instance().m_run_dispatcher.dispatch(z1, res, args);
     }
 
     template <class F>
@@ -396,9 +399,12 @@ namespace xt
     }
 
     template <class F>
-    inline void ztriple_dispatcher<F>::dispatch(const zarray_impl& z1, const zarray_impl& z2, zarray_impl& res)
+    inline void ztriple_dispatcher<F>::dispatch(const zarray_impl& z1,
+                                                const zarray_impl& z2,
+                                                zarray_impl& res,
+                                                const zassign_args& args)
     {
-        instance().m_run_dispatcher.dispatch(z1, z2, res);
+        instance().m_run_dispatcher.dispatch(z1, z2, res, args);
     }
 
     template <class F>

@@ -36,9 +36,12 @@ namespace xt
     struct zassign_functor
     {
         template <class T, class R>
-        static void run(const ztyped_array<T>& z, ztyped_array<R>& zres)
+        static void run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args& args)
         {
-            zassign_wrapped_expression(zres, z.get_array());
+            if (args.slices.empty())
+                zassign_wrapped_expression(zres, z.get_array(), args);
+            else
+                zassign_wrapped_expression(zres,  z.get_chunk(args.slices), args);
         }
 
         template <class T>
@@ -58,24 +61,26 @@ namespace xt
     struct zmove_functor
     {
         template <class T, class R>
-        static disable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres)
+        static disable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args& args)
         {
             // resize is not called in the move constructor of zarray
             // to avoid useless dyanmic allocation if RHS is about
             // to be moved, therefore we have to call it here.
             zres.resize(z.shape());
-            zassign_wrapped_expression(zres, z.get_array());
+            if (args.slices.empty())
+                zassign_wrapped_expression(zres, z.get_array(), args);
+            else
+                zassign_wrapped_expression(zres, z.get_chunk(args.slices), args);
         }
 
         template <class T, class R>
-        static enable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres)
+        static enable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args&)
         {
             if (zres.is_array())
             {
                 ztyped_array<T>& uz = const_cast<ztyped_array<T>&>(z);
                 xarray<T>& ar = uz.get_array();
                 zres.get_array() = std::move(ar);
-                //zres.get_array() = std::move(uz.get_array());
             }
             else
             {
@@ -92,21 +97,24 @@ namespace xt
     };
     XTENSOR_ZMAPPED_FUNCTOR(zmove_functor, detail::xmove_dummy_functor);
 
-#define XTENSOR_UNARY_ZOPERATOR(ZNAME, XOP, XFUN)                                  \
-    struct ZNAME                                                                   \
-    {                                                                              \
-        template <class T, class R>                                                \
-        static void run(const ztyped_array<T>& z, ztyped_array<R>& zres)           \
-        {                                                                          \
-            zassign_wrapped_expression(zres, XOP z.get_array());                   \
-        }                                                                          \
-        template <class T>                                                         \
-        static size_t index(const ztyped_array<T>&)                                \
-        {                                                                          \
-            using result_type = ztyped_array<decltype(XOP std::declval<T>())>;     \
-            return result_type::get_class_static_index();                          \
-        }                                                                          \
-    };                                                                             \
+#define XTENSOR_UNARY_ZOPERATOR(ZNAME, XOP, XFUN)                                                  \
+    struct ZNAME                                                                                   \
+    {                                                                                              \
+        template <class T, class R>                                                                \
+        static void run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args& args) \
+        {                                                                                          \
+            if (args.slices.empty())                                                               \
+                zassign_wrapped_expression(zres, XOP z.get_array(), args);                         \
+            else                                                                                   \
+                zassign_wrapped_expression(zres, XOP z.get_chunk(args.slices), args);              \
+        }                                                                                          \
+        template <class T>                                                                         \
+        static size_t index(const ztyped_array<T>&)                                                \
+        {                                                                                          \
+            using result_type = ztyped_array<decltype(XOP std::declval<T>())>;                     \
+            return result_type::get_class_static_index();                                          \
+        }                                                                                          \
+    };                                                                                             \
     XTENSOR_ZMAPPED_FUNCTOR(ZNAME, XFUN)
 
 #define XTENSOR_BINARY_ZOPERATOR(ZNAME, XOP, XFUN)                                 \
@@ -115,10 +123,17 @@ namespace xt
         template <class T1, class T2, class R>                                     \
         static void run(const ztyped_array<T1>& z1,                                \
                         const ztyped_array<T2>& z2,                                \
-                        ztyped_array<R>& zres)                                     \
+                        ztyped_array<R>& zres,                                     \
+                        const zassign_args& args)                                  \
         {                                                                          \
-            zassign_wrapped_expression(zres,                                       \
-                                 z1.get_array() XOP z2.get_array());               \
+            if (args.slices.empty())                                               \
+                zassign_wrapped_expression(zres,                                   \
+                                           z1.get_array() XOP z2.get_array(),      \
+                                           args);                                  \
+            else                                                                   \
+                zassign_wrapped_expression(zres,                                   \
+                                           z1.get_chunk(args.slices) XOP z2.get_chunk(args.slices),      \
+                                           args);                                  \
         }                                                                          \
         template <class T1, class T2>                                              \
         static size_t index(const ztyped_array<T1>&, const ztyped_array<T2>&)      \
@@ -135,9 +150,13 @@ namespace xt
     {                                                                              \
         template <class T, class R>                                                \
         static void run(const ztyped_array<T>& z,                                  \
-                        ztyped_array<R>& zres)                                     \
+                        ztyped_array<R>& zres,                                     \
+                        const zassign_args& args)                                  \
         {                                                                          \
-            zassign_wrapped_expression(zres, XEXP(z.get_array()));                 \
+            if (args.slices.empty())                                               \
+                zassign_wrapped_expression(zres, XEXP(z.get_array()), args);       \
+            else                                                                   \
+                zassign_wrapped_expression(zres, XEXP(z.get_chunk(args.slices)), args); \
         }                                                                          \
         template <class T>                                                         \
         static size_t index(const ztyped_array<T>&)                                \
@@ -154,10 +173,17 @@ namespace xt
         template <class T1, class T2, class R>                                     \
         static void run(const ztyped_array<T1>& z1,                                \
                         const ztyped_array<T2>& z2,                                \
-                        ztyped_array<R>& zres)                                     \
+                        ztyped_array<R>& zres,                                     \
+                        const zassign_args& args)                                  \
         {                                                                          \
-            zassign_wrapped_expression(zres,                                       \
-                                 XEXP(z1.get_array(), z2.get_array()));            \
+            if (args.slices.empty())                                               \
+                zassign_wrapped_expression(zres,                                   \
+                                           XEXP(z1.get_array(), z2.get_array()),   \
+                                           args);                                  \
+            else                                                                   \
+                zassign_wrapped_expression(zres,                                   \
+                                           XEXP(z1.get_chunk(args.slices), z2.get_chunk(args.slices)),   \
+                                           args);                                  \
         }                                                                          \
         template <class T1, class T2>                                              \
         static size_t index(const ztyped_array<T1>&, const ztyped_array<T2>&)      \
