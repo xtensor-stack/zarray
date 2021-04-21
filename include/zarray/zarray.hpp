@@ -161,7 +161,21 @@ namespace xt
         resize(rhs.shape());
         zassign_args args;
         args.trivial_broadcast = true;
-        zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+        if (p_impl->is_chunked())
+        {
+            const zchunked_array& arr = as_chunked_array();
+            size_t grid_size = arr.grid_size();
+            for (size_t i = 0; i < grid_size; ++i)
+            {
+                args.slices = arr.get_slice_vector(i);
+                args.chunk_index = i;
+                zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+            }
+        }
+        else
+        {
+            zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+        }
         return *this;
     }
 
@@ -174,7 +188,21 @@ namespace xt
     {
         zassign_args args;
         args.trivial_broadcast = true;
-        zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+        if (p_impl->is_chunked())
+        {
+            const zchunked_array& arr = as_chunked_array();
+            size_t grid_size = arr.grid_size();
+            for (size_t i = 0; i < grid_size; ++i)
+            {
+                args.slices = arr.get_slice_vector(i);
+                args.chunk_index = i;
+                zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+            }
+        }
+        else
+        {
+            zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+        }
         return *this;
     }
 

@@ -193,8 +193,6 @@ namespace xt
         virtual const xarray<T>& get_array() const = 0;
         virtual xarray<T> get_chunk(const slice_vector& slices) const = 0;
 
-        virtual void assign(xarray<T>&& rhs) = 0;
-
         XTL_IMPLEMENT_INDEXABLE_CLASS()
 
     protected:
@@ -207,14 +205,24 @@ namespace xt
      * zexpression_wrapper *
      ***********************/
 
+    template <class T>
+    class ztyped_expression_wrapper : public ztyped_array<T>
+    {
+    public:
+
+        virtual ~ztyped_expression_wrapper() = default;
+
+        virtual void assign(xarray<T>&& rhs) = 0;
+    };
+
     template <class CTE>
-    class zexpression_wrapper : public ztyped_array<typename std::decay_t<CTE>::value_type>
+    class zexpression_wrapper : public ztyped_expression_wrapper<typename std::decay_t<CTE>::value_type>
     {
     public:
 
         using self_type = zexpression_wrapper<CTE>;
         using value_type = typename std::decay_t<CTE>::value_type;
-        using base_type = ztyped_array<value_type>;
+        using base_type = ztyped_expression_wrapper<value_type>;
         using shape_type = typename base_type::shape_type;
         using slice_vector = typename base_type::slice_vector;
 
@@ -306,8 +314,6 @@ namespace xt
         const xarray<value_type>& get_array() const override;
         xarray<value_type> get_chunk(const slice_vector& slices) const override;
 
-        void assign(xarray<value_type>&& rhs) override;
-
         self_type* clone() const override;
 
         zarray_impl* strided_view(slice_vector& slices) override;
@@ -356,8 +362,6 @@ namespace xt
         const xarray<value_type>& get_array() const override;
         xarray<value_type> get_chunk(const slice_vector& slices) const override;
 
-        void assign(xarray<value_type>&& rhs) override;
-
         self_type* clone() const override;
 
         zarray_impl* strided_view(slice_vector& slices) override;
@@ -373,12 +377,6 @@ namespace xt
     private:
 
         zarray_wrapper(const zarray_wrapper&) = default;
-
-        template <class CT = CTE>
-        detail::enable_const_t<CT> assign_impl(xarray<value_type>&& rhs);
-
-        template <class CT = CTE>
-        detail::disable_const_t<CT> assign_impl(xarray<value_type>&& rhs);
 
         CTE m_array;
         nlohmann::json m_metadata;
@@ -436,7 +434,6 @@ namespace xt
         const xarray<value_type>& get_array() const override;
         xarray<value_type> get_chunk(const slice_vector& slices) const override;
 
-        void assign(xarray<value_type>&& rhs) override;
         void assign_chunk(xarray<value_type>&& rhs, size_t chunk_index) override;
 
         self_type* clone() const override;
@@ -460,12 +457,6 @@ namespace xt
         zchunked_wrapper(const zchunked_wrapper&) = default;
 
         void compute_cache() const;
-
-        template <class CT = CTE>
-        detail::enable_const_t<CT> assign_impl(xarray<value_type>&& rhs);
-
-        template <class CT = CTE>
-        detail::disable_const_t<CT> assign_impl(xarray<value_type>&& rhs);
 
         template <class CT = CTE>
         detail::enable_const_t<CT> assign_chunk_impl(xarray<value_type>&& rhs, size_t chunk_index);
@@ -781,12 +772,6 @@ namespace xt
     }
 
     template <class CTE>
-    void zscalar_wrapper<CTE>::assign(xarray<value_type>&&)
-    {
-        throw std::runtime_error("scalar cannot be assigned an array");
-    }
-
-    template <class CTE>
     auto zscalar_wrapper<CTE>::clone() const -> self_type*
     {
         return new self_type(*this);
@@ -914,12 +899,6 @@ namespace xt
     }
 
     template <class CTE>
-    void zarray_wrapper<CTE>::assign(xarray<value_type>&& rhs)
-    {
-        assign_impl(std::move(rhs));
-    }
-
-    template <class CTE>
     auto zarray_wrapper<CTE>::clone() const -> self_type*
     {
         return new self_type(*this);
@@ -974,20 +953,6 @@ namespace xt
         return m_array.broadcast_shape(shape, reuse_cache);
     }
 
-    template <class CTE>
-    template <class CT>
-    inline detail::enable_const_t<CT> zarray_wrapper<CTE>::assign_impl(xarray<value_type>&&)
-    {
-        throw std::runtime_error("const array is not assignable");
-    }
-
-    template <class CTE>
-    template <class CT>
-    inline detail::disable_const_t<CT> zarray_wrapper<CTE>::assign_impl(xarray<value_type>&& rhs)
-    {
-        m_array = std::move(rhs);
-    }
-
     /********************
      * zchunked_wrapper *
      ********************/
@@ -1039,12 +1004,6 @@ namespace xt
     {
         compute_cache();
         return xt::strided_view(m_cache, slices);
-    }
-
-    template <class CTE>
-    void zchunked_wrapper<CTE>::assign(xarray<value_type>&& rhs)
-    {
-        assign_impl(std::move(rhs));
     }
 
     template <class CTE>
@@ -1149,30 +1108,9 @@ namespace xt
 
     template <class CTE>
     template <class CT>
-    inline detail::enable_const_t<CT> zchunked_wrapper<CTE>::assign_impl(xarray<value_type>&&)
-    {
-        throw std::runtime_error("const array is not assignable");
-    }
-
-    template <class CTE>
-    template <class CT>
-    inline detail::disable_const_t<CT> zchunked_wrapper<CTE>::assign_impl(xarray<value_type>&& rhs)
-    {
-        xt::noalias(m_chunked_array) = rhs;
-    }
-
-    template <class CTE>
-    template <class CT>
     inline detail::enable_const_t<CT> zchunked_wrapper<CTE>::assign_chunk_impl(xarray<value_type>&&, size_t)
     {
         throw std::runtime_error("const array is not assignable");
-    }
-
-    template <class S>
-    void print_shape(const S& shape)
-    {
-        for (auto s: shape) { std::cout << s << ", "; }
-        std::cout << std::endl;
     }
 
     template <class CTE>

@@ -84,7 +84,7 @@ namespace xt
                 }
                 else
                 {
-                    using array_type = ztyped_array<value_type>;
+                    using array_type = ztyped_expression_wrapper<value_type>;
                     array_type& ar = static_cast<array_type&>(impl);
                     xarray<value_type> tmp(e2);
                     ar.assign(std::move(tmp));
@@ -138,7 +138,8 @@ namespace xt
         else
         {
             xarray<T> tmp(rhs);
-            lhs.assign(std::move(tmp));
+            auto& expr_lhs = static_cast<ztyped_expression_wrapper<T>&>(lhs);
+            expr_lhs.assign(std::move(tmp));
         }
     }
 }
