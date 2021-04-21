@@ -11,7 +11,7 @@
 #define XTENSOR_ZASSIGN_HPP
 
 #include "xtensor/xassign.hpp"
-#include "zarray_impl.hpp"
+#include "zwrappers.hpp"
 
 namespace xt
 {

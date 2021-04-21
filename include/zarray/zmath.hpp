@@ -11,8 +11,8 @@
 #define XTENSOR_ZMATH_HPP
 
 #include "xtensor/xmath.hpp"
-#include "zarray_impl.hpp"
 #include "zassign.hpp"
+#include "zwrappers.hpp"
 
 namespace xt
 {

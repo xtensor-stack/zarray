@@ -16,10 +16,10 @@
 #include <xtl/xmultimethods.hpp>
 #include <xtensor/xarray.hpp>
 
-#include "zarray_impl.hpp"
 #include "zassign.hpp"
 #include "zfunction.hpp"
 #include "zmath.hpp"
+#include "zwrappers.hpp"
 
 namespace xt
 {
