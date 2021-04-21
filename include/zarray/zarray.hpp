@@ -163,14 +163,11 @@ namespace xt
         args.trivial_broadcast = true;
         if (p_impl->is_chunked())
         {
-            const zchunked_array& arr = as_chunked_array();
-            size_t grid_size = arr.grid_size();
-            for (size_t i = 0; i < grid_size; ++i)
+            auto l = [](zarray& lhs, const zarray& rhs, zassign_args& args)
             {
-                args.slices = arr.get_slice_vector(i);
-                args.chunk_index = i;
-                zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
-            }
+                zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *(lhs.p_impl), args);
+            };
+            detail::run_chunked_assign_loop(*this, rhs, args, l);
         }
         else
         {
@@ -190,14 +187,11 @@ namespace xt
         args.trivial_broadcast = true;
         if (p_impl->is_chunked())
         {
-            const zchunked_array& arr = as_chunked_array();
-            size_t grid_size = arr.grid_size();
-            for (size_t i = 0; i < grid_size; ++i)
+            auto l = [](zarray& lhs, const zarray& rhs, zassign_args& args)
             {
-                args.slices = arr.get_slice_vector(i);
-                args.chunk_index = i;
-                zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
-            }
+                zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *(lhs.p_impl), args);
+            };
+            detail::run_chunked_assign_loop(*this, rhs, args, l);
         }
         else
         {

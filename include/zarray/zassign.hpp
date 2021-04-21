@@ -32,6 +32,19 @@ namespace xt
 
     namespace detail
     {
+        template <class E1, class E2, class F>
+        void run_chunked_assign_loop(E1 & e1, const E2& e2, zassign_args& args, F f)
+        {
+            const zchunked_array& arr = e1.as_chunked_array();
+            size_t grid_size = arr.grid_size();
+            for (size_t i = 0; i < grid_size; ++i)
+            {
+                args.slices = arr.get_slice_vector(i);
+                args.chunk_index = i;
+                f(e1, e2, args);
+            }
+        }
+
         template <class Tag>
         struct zexpression_assigner
         {
@@ -41,14 +54,11 @@ namespace xt
             {
                 if (e1.get_implementation().is_chunked())
                 {
-                    const zchunked_array& arr = e1.as_chunked_array();
-                    size_t grid_size = arr.grid_size();
-                    for (size_t i = 0; i < grid_size; ++i)
+                    auto l = [](E1& e1, const E2& e2, zassign_args& args)
                     {
-                        args.slices = arr.get_slice_vector(i);
-                        args.chunk_index = i;
                         e2.assign_to(e1.get_implementation(), args);
-                    }
+                    };
+                    run_chunked_assign_loop(e1, e2, args, l);
                 }
                 else
                 {
