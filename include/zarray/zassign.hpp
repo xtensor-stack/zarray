@@ -32,6 +32,19 @@ namespace xt
 
     namespace detail
     {
+        template <class E1, class E2, class F>
+        void run_chunked_assign_loop(E1 & e1, const E2& e2, zassign_args& args, F f)
+        {
+            const zchunked_array& arr = e1.as_chunked_array();
+            size_t grid_size = arr.grid_size();
+            for (size_t i = 0; i < grid_size; ++i)
+            {
+                args.slices = arr.get_slice_vector(i);
+                args.chunk_index = i;
+                f(e1, e2, args);
+            }
+        }
+
         template <class Tag>
         struct zexpression_assigner
         {
@@ -41,14 +54,11 @@ namespace xt
             {
                 if (e1.get_implementation().is_chunked())
                 {
-                    const zchunked_array& arr = e1.as_chunked_array();
-                    size_t grid_size = arr.grid_size();
-                    for (size_t i = 0; i < grid_size; ++i)
+                    auto l = [](E1& e1, const E2& e2, zassign_args& args)
                     {
-                        args.slices = arr.get_slice_vector(i);
-                        args.chunk_index = i;
                         e2.assign_to(e1.get_implementation(), args);
-                    }
+                    };
+                    run_chunked_assign_loop(e1, e2, args, l);
                 }
                 else
                 {
@@ -84,7 +94,7 @@ namespace xt
                 }
                 else
                 {
-                    using array_type = ztyped_array<value_type>;
+                    using array_type = ztyped_expression_wrapper<value_type>;
                     array_type& ar = static_cast<array_type&>(impl);
                     xarray<value_type> tmp(e2);
                     ar.assign(std::move(tmp));
@@ -138,7 +148,8 @@ namespace xt
         else
         {
             xarray<T> tmp(rhs);
-            lhs.assign(std::move(tmp));
+            auto& expr_lhs = static_cast<ztyped_expression_wrapper<T>&>(lhs);
+            expr_lhs.assign(std::move(tmp));
         }
     }
 }

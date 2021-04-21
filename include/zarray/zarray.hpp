@@ -161,7 +161,18 @@ namespace xt
         resize(rhs.shape());
         zassign_args args;
         args.trivial_broadcast = true;
-        zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+        if (p_impl->is_chunked())
+        {
+            auto l = [](zarray& lhs, const zarray& rhs, zassign_args& args)
+            {
+                zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *(lhs.p_impl), args);
+            };
+            detail::run_chunked_assign_loop(*this, rhs, args, l);
+        }
+        else
+        {
+            zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+        }
         return *this;
     }
 
@@ -174,7 +185,18 @@ namespace xt
     {
         zassign_args args;
         args.trivial_broadcast = true;
-        zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+        if (p_impl->is_chunked())
+        {
+            auto l = [](zarray& lhs, const zarray& rhs, zassign_args& args)
+            {
+                zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *(lhs.p_impl), args);
+            };
+            detail::run_chunked_assign_loop(*this, rhs, args, l);
+        }
+        else
+        {
+            zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
+        }
         return *this;
     }
 

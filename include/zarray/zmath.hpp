@@ -74,7 +74,7 @@ namespace xt
         }
 
         template <class T, class R>
-        static enable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args&)
+        static enable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args& args)
         {
             if (zres.is_array())
             {
@@ -82,10 +82,16 @@ namespace xt
                 xarray<T>& ar = uz.get_array();
                 zres.get_array() = std::move(ar);
             }
+            else if (zres.is_chunked())
+            {
+                zassign_wrapped_expression(zres, z.get_chunk(args.slices), args);
+            }
             else
             {
+                using array_type = ztyped_expression_wrapper<T>;
+                array_type& lhs = static_cast<array_type&>(zres);
                 ztyped_array<T>& uz = const_cast<ztyped_array<T>&>(z);
-                zres.assign(std::move(uz.get_array()));
+                lhs.assign(std::move(uz.get_array()));
             }
         }
 
