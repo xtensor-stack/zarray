@@ -1101,7 +1101,7 @@ namespace xt
         if (!m_cache_initialized)
         {
             m_cache.resize(m_chunked_array.shape());
-            as_chunked(m_cache,  m_chunked_array.chunk_shape()) = m_chunked_array;
+            as_chunked(m_cache) = m_chunked_array;
             m_cache_initialized = true;
         }
     }
