@@ -26,6 +26,26 @@ namespace xt
         EXPECT_EQ(res, chunk_shape);
     }
 
+    TEST(zchunked_array, iterator)
+    {
+        using shape_type =  zarray::shape_type;
+        shape_type shape = {10, 10, 10};
+        shape_type chunk_shape = {2, 3, 4};
+        auto a = chunked_array<double>(shape, chunk_shape);
+        zarray za(a);
+
+        auto it = a.chunk_cbegin();
+        auto it_end = a.chunk_cend();
+        auto zit = za.as_chunked_array().chunk_begin();
+        
+        while(it != it_end)
+        {
+            const auto& tmp = zit.get_xchunked_iterator<decltype(it)>();
+            EXPECT_EQ(tmp, it);
+            ++it, ++zit;
+        }
+    }
+
     TEST(zchunked_array, custom_metadata)
     {
         using shape_type =  zarray::shape_type;

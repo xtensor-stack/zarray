@@ -77,6 +77,7 @@ set(ZARRAY_HEADERS
     ${ZARRAY_INCLUDE_DIR}/zarray/zarray_impl.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zarray_wrapper.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zassign.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zchunked_iterator.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zchunked_wrapper.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zdispatcher.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zdispatching_types.hpp
