@@ -11,7 +11,7 @@
 #define XTENSOR_ZASSIGN_HPP
 
 #include "xtensor/xassign.hpp"
-#include "zarray_impl.hpp"
+#include "zwrappers.hpp"
 
 namespace xt
 {
@@ -19,14 +19,19 @@ namespace xt
     {
         zassign_args();
         bool trivial_broadcast;
-        xstrided_slice_vector slices;
-        size_t chunk_index;
+        bool chunk_assign;
+        zchunked_iterator chunk_iter;
+
+        inline const xstrided_slice_vector& slices() const
+        {
+            return chunk_iter.get_slice_vector();
+        }
     };
 
     inline zassign_args::zassign_args()
         : trivial_broadcast(false)
-        , slices()
-        , chunk_index(0u)
+        , chunk_assign(false)
+        , chunk_iter()
     {
     }
 
@@ -36,12 +41,13 @@ namespace xt
         void run_chunked_assign_loop(E1 & e1, const E2& e2, zassign_args& args, F f)
         {
             const zchunked_array& arr = e1.as_chunked_array();
-            size_t grid_size = arr.grid_size();
-            for (size_t i = 0; i < grid_size; ++i)
+            args.chunk_iter = arr.chunk_begin();
+            args.chunk_assign = true;
+            auto chunk_end = arr.chunk_end();
+            while (args.chunk_iter != chunk_end)
             {
-                args.slices = arr.get_slice_vector(i);
-                args.chunk_index = i;
                 f(e1, e2, args);
+                ++args.chunk_iter;
             }
         }
 
@@ -85,11 +91,11 @@ namespace xt
                 else if (impl.is_chunked())
                 {
                     using array_type = ztyped_chunked_array<value_type>;
-                    array_type& ar = static_cast<array_type&>(impl);
-                    size_t grid_size = ar.grid_size();
-                    for (size_t i = 0; i < grid_size; ++i)
+                    array_type& arr = static_cast<array_type&>(impl);
+                    auto chunk_end = arr.chunk_end();
+                    for (auto chunk_iter = arr.chunk_begin(); chunk_iter != chunk_end; ++chunk_iter)
                     {
-                        ar.assign_chunk(strided_view(e2, ar.get_slice_vector(i)), i);
+                        arr.assign_chunk(strided_view(e2, chunk_iter.get_slice_vector()), chunk_iter);
                     }
                 }
                 else
@@ -139,11 +145,11 @@ namespace xt
         {
             zassign_wrapped_expression(lhs.get_array(), rhs, args);
         }
-        else if (!args.slices.empty())
+        else if (args.chunk_assign)
         {
             xarray<T> tmp(rhs);
             auto& chunked_lhs = static_cast<ztyped_chunked_array<T>&>(lhs);
-            chunked_lhs.assign_chunk(std::move(tmp), args.chunk_index); 
+            chunked_lhs.assign_chunk(std::move(tmp), args.chunk_iter); 
         }
         else
         {

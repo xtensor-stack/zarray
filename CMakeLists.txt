@@ -75,11 +75,17 @@ set(ZARRAY_HEADERS
     ${ZARRAY_INCLUDE_DIR}/zarray/zarray.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zarray_config.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zarray_impl.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zarray_wrapper.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zassign.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zchunked_iterator.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zchunked_wrapper.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zdispatcher.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zdispatching_types.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zexpression_wrapper.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zfunction.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zmath.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zscalar_wrapper.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zwrappers.hpp
 )
 
 add_library(zarray INTERFACE)
