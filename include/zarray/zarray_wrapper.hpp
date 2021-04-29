@@ -50,6 +50,8 @@ namespace xt
         void set_metadata(const nlohmann::json& metadata) override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
+        void reshape(const shape_type&) override;
+        void reshape(shape_type&&) override;
         void resize(const shape_type&) override;
         void resize(shape_type&&) override;
         bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
@@ -79,6 +81,18 @@ namespace xt
             static inline xarray<T>& get_array(const xarray<T>&)
             {
                 throw std::runtime_error("Cannot return non const array from const array");
+            }
+
+            template <class S>
+            static inline void reshape(xarray<T>& ar, S&& shape)
+            {
+                ar.reshape(std::forward<S>(shape));
+            }
+
+            template <class S>
+            static inline void reshape(const xarray<T>&, S&&)
+            {
+                throw std::runtime_error("Cannot reshape const array");
             }
 
             template <class S>
@@ -175,6 +189,18 @@ namespace xt
     auto zarray_wrapper<CTE>::shape() const -> const shape_type&
     {
         return m_array.shape();
+    }
+
+    template <class CTE>
+    void zarray_wrapper<CTE>::reshape(const shape_type& shape)
+    {
+        detail::zarray_wrapper_helper<value_type>::reshape(m_array, shape);
+    }
+
+    template <class CTE>
+    void zarray_wrapper<CTE>::reshape(shape_type&& shape)
+    {
+        detail::zarray_wrapper_helper<value_type>::reshape(m_array, std::move(shape));
     }
 
     template <class CTE>

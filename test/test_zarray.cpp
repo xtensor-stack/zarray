@@ -189,6 +189,16 @@ namespace xt
         EXPECT_EQ(shape, a.shape());
     }
 
+    TEST(zarray, reshape)
+    {
+        xarray<double> a = {1., 2., 3., 4.};
+        zarray za(a);
+
+        dynamic_shape<size_t> sh = {2u, 2u};
+        za.resize(sh);
+        EXPECT_EQ(a.shape(), sh);
+    }
+
     TEST(zarray, resize)
     {
         xarray<double> a = {{1., 2.}, {3., 4.}};

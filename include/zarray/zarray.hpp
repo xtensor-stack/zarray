@@ -95,6 +95,8 @@ namespace xt
 
         std::size_t dimension() const;
         const shape_type& shape() const;
+        void reshape(const shape_type& shape);
+        void reshape(shape_type&& shape);
         void resize(const shape_type& shape);
         void resize(shape_type&& shape);
         bool broadcast_shape(shape_type& shape, bool reuse_cache = false) const;
@@ -301,6 +303,16 @@ namespace xt
     inline auto zarray::shape() const -> const shape_type&
     {
         return p_impl->shape();
+    }
+
+    inline void zarray::reshape(const shape_type& shape)
+    {
+        p_impl->reshape(shape);
+    }
+
+    inline void zarray::reshape(shape_type&& shape)
+    {
+        p_impl->reshape(std::move(shape));
     }
 
     inline void zarray::resize(const shape_type& shape)

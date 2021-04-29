@@ -78,6 +78,8 @@ namespace xt
         void set_metadata(const nlohmann::json& metadata) override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
+        void reshape(const shape_type& shape) override;
+        void reshape(shape_type&&) override;
         void resize(const shape_type& shape) override;
         void resize(shape_type&&) override;
         bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
@@ -208,6 +210,18 @@ namespace xt
     auto zchunked_wrapper<CTE>::shape() const -> const shape_type&
     {
         return m_chunked_array.shape();
+    }
+
+    template <class CTE>
+    void zchunked_wrapper<CTE>::reshape(const shape_type&)
+    {
+        // No op
+    }
+
+    template <class CTE>
+    void zchunked_wrapper<CTE>::reshape(shape_type&&)
+    {
+        // No op
     }
 
     template <class CTE>
