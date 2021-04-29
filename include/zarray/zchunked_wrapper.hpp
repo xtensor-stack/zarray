@@ -70,6 +70,7 @@ namespace xt
         xarray<value_type> get_chunk(const slice_vector& slices) const override;
 
         self_type* clone() const override;
+        std::ostream& print(std::ostream& out) const override;
 
         zarray_impl* strided_view(slice_vector& slices) override;
 
@@ -166,11 +167,16 @@ namespace xt
         return xt::strided_view(m_cache, slices);
     }
 
-
     template <class CTE>
     auto zchunked_wrapper<CTE>::clone() const -> self_type*
     {
         return new self_type(*this);
+    }
+
+    template <class CTE>
+    std::ostream& zchunked_wrapper<CTE>::print(std::ostream& out) const
+    {
+        return out << m_chunked_array;
     }
 
     template <class CTE>

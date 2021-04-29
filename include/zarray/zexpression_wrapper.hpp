@@ -54,6 +54,7 @@ namespace xt
         void assign(xarray<value_type>&& rhs) override;
 
         self_type* clone() const override;
+        std::ostream& print(std::ostream& out) const override;
 
         zarray_impl* strided_view(slice_vector& slices) override;
 
@@ -155,6 +156,12 @@ namespace xt
     auto zexpression_wrapper<CTE>::clone() const -> self_type*
     {
         return new self_type(*this);
+    }
+
+    template <class CTE>
+    std::ostream& zexpression_wrapper<CTE>::print(std::ostream& out) const
+    {
+        return out << m_expression;
     }
 
     template <class CTE>
