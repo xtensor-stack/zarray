@@ -32,6 +32,21 @@ namespace xt
         EXPECT_EQ(a, ra);
     }
 
+    TEST(zarray, initializer_list)
+    {
+        zarray za = {1., 2., 3., 4.};
+        xarray<double> xa = {1., 2., 3., 4.};
+        EXPECT_EQ(za.get_array<double>(), xa);
+
+        zarray zb = {{1., 2.}, {3., 4.}};
+        xarray<double> xb = {{1., 2.}, {3., 4.}};
+        EXPECT_EQ(zb.get_array<double>(), xb);
+
+        zarray zc = {{1., 2.}, {3., 4.}};
+        xarray<double> xc = {{1., 2.}, {3., 4.}};
+        EXPECT_EQ(zc.get_array<double>(), xc);
+    }
+
     TEST(zarray, copy_constructor)
     {
         xarray<double> a = {{1., 2.}, {3., 4.}};

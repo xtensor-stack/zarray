@@ -48,6 +48,17 @@ namespace xt
         zarray() = default;
         ~zarray() = default;
 
+        template <class T>
+        zarray(std::initializer_list<T> t);
+        template <class T>
+        zarray(std::initializer_list<std::initializer_list<T>> t);
+        template <class T>
+        zarray(std::initializer_list<
+                   std::initializer_list<
+                       std::initializer_list<T>
+                   >
+               > t);
+
         zarray(implementation_ptr&& impl);
         zarray& operator=(implementation_ptr&& impl);
 
@@ -138,6 +149,28 @@ namespace xt
     inline zarray& zarray::assign_expression(const xexpression<E>& e, zarray_expression_tag)
     {
         return semantic_base::operator=(e);
+    }
+
+    template <class T>
+    inline zarray::zarray(std::initializer_list<T> t)
+        : zarray(xarray<T>(t))
+    {
+    }
+
+    template <class T>
+    inline zarray::zarray(std::initializer_list<std::initializer_list<T>> t)
+        : zarray(xarray<T>(t))
+    {
+    }
+    
+    template <class T>
+    inline zarray::zarray(std::initializer_list<
+                              std::initializer_list<
+                                  std::initializer_list<T>
+                              >
+                          > t)
+        : zarray(xarray<T>(t))
+    {
     }
 
     inline zarray::zarray(implementation_ptr&& impl)
