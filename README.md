@@ -35,6 +35,7 @@ make install
 | `zarray` | `xtesor` |
 |----------|----------|
 |  master  |  0.23.8  |
+|  0.1.0   |  0.23.8  |
 |  0.0.6   |  0.23.8  |
 
 ## Usage
@@ -54,6 +55,7 @@ xt::zarray arr2 =
 
 xt::zarray res = xt::strided_view(arr1, {1, xt::all()}) + arr2;
 std::cout << res << std::endl;
+```
 
 Outputs:
 
