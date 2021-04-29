@@ -52,6 +52,8 @@ namespace xt
         void set_metadata(const nlohmann::json& metadata) override;
         std::size_t dimension() const override;
         const shape_type& shape() const override;
+        void reshape(const shape_type&) override;
+        void reshape(shape_type&&) override;
         void resize(const shape_type&) override;
         void resize(shape_type&&) override;
         bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
@@ -150,6 +152,18 @@ namespace xt
     auto zscalar_wrapper<CTE>::shape() const -> const shape_type&
     {
         return m_array.shape();
+    }
+
+    template <class CTE>
+    void zscalar_wrapper<CTE>::reshape(const shape_type&)
+    {
+        throw std::runtime_error("Cannot reshape scalar wrapper");
+    }
+
+    template <class CTE>
+    void zscalar_wrapper<CTE>::reshape(shape_type&&)
+    {
+        throw std::runtime_error("Cannot reshape scalar wrapper");
     }
 
     template <class CTE>

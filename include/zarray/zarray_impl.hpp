@@ -164,6 +164,8 @@ namespace xt
 
         virtual std::size_t dimension() const = 0;
         virtual const shape_type& shape() const = 0;
+        virtual void reshape(const shape_type& shape) = 0;
+        virtual void reshape(shape_type&& shape) = 0;
         virtual void resize(const shape_type& shape) = 0;
         virtual void resize(shape_type&& shape) = 0;
         virtual bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const = 0;
