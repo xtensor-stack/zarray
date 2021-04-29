@@ -121,6 +121,9 @@ namespace xt
         implementation_ptr p_impl;
     };
 
+    zarray strided_view(zarray& z, xstrided_slice_vector& slices);
+    std::ostream& operator<<(std::ostream& out, const zarray& ar);
+
     /*************************
      * zarray implementation *
      *************************/
@@ -334,6 +337,11 @@ namespace xt
     {
         std::unique_ptr<zarray_impl> p(z.get_implementation().strided_view(slices));
         return zarray(std::move(p));
+    }
+
+    inline std::ostream& operator<<(std::ostream& out, const zarray& ar)
+    {
+        return ar.get_implementation().print(out);
     }
 }
 

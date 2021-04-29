@@ -42,9 +42,19 @@ namespace xt
         xarray<double> xb = {{1., 2.}, {3., 4.}};
         EXPECT_EQ(zb.get_array<double>(), xb);
 
-        zarray zc = {{1., 2.}, {3., 4.}};
-        xarray<double> xc = {{1., 2.}, {3., 4.}};
+        zarray zc = {{{1., 2.}, {3., 4.}}, {{5., 6.}, {7., 8.}}};
+        xarray<double> xc = {{{1., 2.}, {3., 4.}}, {{5., 6.}, {7., 8.}}};
         EXPECT_EQ(zc.get_array<double>(), xc);
+    }
+
+    TEST(zarray, print)
+    {
+        zarray zb = {{1., 2.}, {3., 4.}};
+        std::ostringstream out;
+        out << zb;
+        std::string res = out.str();
+        std::string expected = "{{ 1.,  2.},\n { 3.,  4.}}";
+        EXPECT_EQ(expected, res);
     }
 
     TEST(zarray, copy_constructor)

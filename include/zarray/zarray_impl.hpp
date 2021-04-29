@@ -14,12 +14,13 @@
 #include <xtl/xhalf_float.hpp>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xchunked_array.hpp>
+#include <xtensor/xchunked_view.hpp>
+#include <xtensor/xio.hpp>
 #include <xtensor/xnoalias.hpp>
 #include <xtensor/xscalar.hpp>
 #include <xtensor/xshape.hpp>
 #include <xtensor/xshape.hpp>
-#include "xtensor/xstrided_view.hpp"
-#include "xtensor/xchunked_view.hpp"
+#include <xtensor/xstrided_view.hpp>
 
 namespace xt
 {
@@ -151,6 +152,7 @@ namespace xt
         zarray_impl& operator=(zarray_impl&&) = delete;
 
         virtual self_type* clone() const = 0;
+        virtual std::ostream& print(std::ostream& out) const = 0;
 
         virtual bool is_array() const = 0;
         virtual bool is_chunked() const = 0;
