@@ -32,11 +32,11 @@ make install
 
 `zarray` depends on `xtensor`:
 
-| `zarray` | `xtesor` |
-|----------|----------|
-|  master  |  0.23.8  |
-|  0.1.0   |  0.23.8  |
-|  0.0.6   |  0.23.8  |
+| `zarray` | `xtensor` |
+|----------|-----------|
+|  master  |  0.23.8   |
+|  0.1.0   |  0.23.8   |
+|  0.0.6   |  0.23.8   |
 
 ## Usage
 
@@ -45,7 +45,7 @@ make install
 ```cpp
 #include <zarray/zarray.hpp>
 
-xt::zarray arr1 = 
+xt::zarray arr1 =
   {{1.0, 2.0, 3.0},
    {4.0, 5.0, 6.0},
    {7.0, 8.0, 9.0}};
@@ -68,12 +68,12 @@ Outputs:
 ```cpp
 #include <zarray/zarray.hpp>
 
-xt::zarray arr = 
+xt::zarray arr =
   {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 arr.reshape({3, 3});
 
-std::cout << arr;
+std::cout << arr << std::endl;
 ```
 
 Outputs:
