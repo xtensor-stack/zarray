@@ -276,6 +276,15 @@ namespace xt
 #undef XTENSOR_UNARY_ZOPERATOR
 #undef XTENSOR_ZMAPPED_FUNCTOR
 
+
+// inline auto sum(const zarray & array, std::vector<size_t> & axis){
+//     std::unique_ptr<zarray_impl> p(z.get_implementation().sum(
+//         typename zarray_impl::axis_span(axis.data(), axis.size());
+//     ));
+//     return zarray(std::move(p));
+// }
+
+
 }
 
 #endif

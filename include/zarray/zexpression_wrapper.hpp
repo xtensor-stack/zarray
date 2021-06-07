@@ -11,6 +11,7 @@
 #define XTENSOR_ZEXPRESSION_WRAPPER_HPP
 
 #include "zarray_impl.hpp"
+#include "xtensor/xreducer.hpp"
 
 namespace xt
 {
@@ -38,6 +39,7 @@ namespace xt
         using base_type = ztyped_expression_wrapper<value_type>;
         using shape_type = typename base_type::shape_type;
         using slice_vector = typename base_type::slice_vector;
+        using axis_span = typename base_type::axis_span;
 
         template <class E>
         zexpression_wrapper(E&& e);
@@ -68,7 +70,30 @@ namespace xt
         void resize(shape_type&&) override;
         bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
+
+        zarray_impl* sum(axis_span axis) const override
+        {
+            return this->sum_impl<>(axis);
+        }
+
+
+
     private:
+        template<class Q=CTE,  typename detail::enable_xreducer<Q> * = nullptr>
+        zarray_impl* sum_impl(axis_span axis) const
+        {
+            auto e =  xt::sum(get_array(), axis);
+            return detail::build_zarray(std::move(e));
+        }
+
+        template<class Q=CTE, typename detail::disable_xreducer<Q> * = nullptr>
+        zarray_impl* sum_impl(axis_span axis) const
+        {
+            #warning "this is deprecated"
+            auto e =  xt::sum(m_expression, axis);
+            return detail::build_zarray(std::move(e));
+        }
+
 
         zexpression_wrapper(const zexpression_wrapper&) = default;
 
@@ -169,7 +194,7 @@ namespace xt
     template <class CTE>
     zarray_impl* zexpression_wrapper<CTE>::strided_view(slice_vector& slices)
     {
-        return strided_view_impl(slices, detail::is_xstrided_view<CTE>());
+        return strided_view_impl(slices,  std::integral_constant<bool,detail::is_xstrided_view<CTE>::value || detail::is_xreducer<CTE>::value  >());
     }
 
     template <class CTE>
@@ -280,6 +305,7 @@ namespace xt
     {
         throw std::runtime_error("cannot resize not assignable expression wrapper");
     }
+
 }
 
 #endif

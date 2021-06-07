@@ -11,6 +11,7 @@
 #define XTENSOR_ZARRAY_WRAPPER_HPP
 
 #include "zarray_impl.hpp"
+#include "xtensor/xreducer.hpp"
 
 namespace xt
 {
@@ -28,6 +29,7 @@ namespace xt
         using base_type = ztyped_array<value_type>;
         using shape_type = typename base_type::shape_type;
         using slice_vector = typename base_type::slice_vector;
+        using axis_span = typename base_type::axis_span;
 
         template <class E>
         zarray_wrapper(E&& e);
@@ -55,6 +57,13 @@ namespace xt
         void resize(const shape_type&) override;
         void resize(shape_type&&) override;
         bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
+
+
+        zarray_impl* sum(axis_span axis) const override
+        {
+            auto e =  xt::sum(m_array, axis);
+            return detail::build_zarray(std::move(e));
+        }
 
     private:
 

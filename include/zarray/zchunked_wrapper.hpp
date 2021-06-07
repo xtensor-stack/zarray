@@ -56,6 +56,7 @@ namespace xt
         using value_type = typename base_type::value_type;
         using shape_type = zchunked_array::shape_type;
         using slice_vector = typename base_type::slice_vector;
+        using axis_span = typename base_type::axis_span;
 
         template <class E>
         zchunked_wrapper(E&& e);
@@ -91,6 +92,13 @@ namespace xt
         zchunked_iterator chunk_end() const override;
 
         void assign_chunk(xarray<value_type>&& rhs, const zchunked_iterator& chunk_it) override;
+
+        zarray_impl* sum(axis_span axis) const override
+        {
+            //auto e =  xt::sum(m_array, axis);
+            return nullptr;
+            //return detail::build_zarray(std::move(e));
+        }
 
     private:
 

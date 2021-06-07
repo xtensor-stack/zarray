@@ -10,6 +10,7 @@
 #ifndef XTENSOR_ZARRAY_IMPL_HPP
 #define XTENSOR_ZARRAY_IMPL_HPP
 
+#include <xtl/xspan.hpp>
 #include <xtl/xplatform.hpp>
 #include <xtl/xhalf_float.hpp>
 #include <xtensor/xarray.hpp>
@@ -68,6 +69,26 @@ namespace xt
         struct is_xstrided_view<xstrided_view<CT, S, L, FST>> : std::true_type
         {
         };
+
+
+        template <class E>
+        struct is_xreducer : std::false_type
+        {
+        };
+
+        template <class F, class CT, class X, class O>
+        struct is_xreducer<xreducer<F, CT, X, O>> : std::true_type
+        {
+        };
+
+
+
+        template<class T>
+        using enable_xreducer = std::enable_if_t<is_xreducer<T>::value>;
+
+        template<class T>
+        using disable_xreducer = std::enable_if_t<!is_xreducer<T>::value>;
+
 
         template <class E>
         struct zwrapper_builder
@@ -144,6 +165,7 @@ namespace xt
 
         using self_type = zarray_impl;
         using shape_type = dynamic_shape<std::size_t>;
+        using axis_span = xtl::span<const std::size_t>;
 
         virtual ~zarray_impl() = default;
 
@@ -169,6 +191,16 @@ namespace xt
         virtual void resize(const shape_type& shape) = 0;
         virtual void resize(shape_type&& shape) = 0;
         virtual bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const = 0;
+
+
+        // reducers
+        virtual self_type* sum(axis_span axis) const = 0;
+        // virtual self_type* prod(xt::span<std::size_t> axis) const = 0;
+        // virtual self_type* mean(xt::span<std::size_t> axis) const = 0;
+        // virtual self_type* variance(xt::span<std::size_t> axis) const = 0;
+        // virtual self_type* variance(xt::span<std::size_t> axis) const = 0;
+        // virtual self_type* standart_deviation(xt::span<std::size_t> axis) const = 0;
+        // virtual self_type* amax(xt::span<std::size_t> axis) const = 0;
 
         XTL_IMPLEMENT_INDEXABLE_CLASS()
 
