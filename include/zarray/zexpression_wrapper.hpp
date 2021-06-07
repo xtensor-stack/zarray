@@ -89,7 +89,6 @@ namespace xt
         template<class Q=CTE, typename detail::disable_xreducer<Q> * = nullptr>
         zarray_impl* sum_impl(axis_span axis) const
         {
-            #warning "this is deprecated"
             auto e =  xt::sum(m_expression, axis);
             return detail::build_zarray(std::move(e));
         }
