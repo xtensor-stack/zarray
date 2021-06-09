@@ -14,6 +14,7 @@
 
 #include "zdispatching_types.hpp"
 #include "zmath.hpp"
+#include "zreducer_options.hpp"
 
 namespace xt
 {
@@ -45,9 +46,11 @@ namespace xt
 
     // Double dispatchers are used for unary operations.
     // They dispatch on the single argument and on the
-    // result.
-
-    template <class F>
+    // result. 
+    // Furthermore they are used for the reducers.
+    // the dispatch on the single argument of the reducer
+    // and the result
+    template <class F, class URL = mpl::vector<const zassign_args>, class UTL = mpl::vector<>>
     class zdouble_dispatcher
     {
     public:
@@ -59,11 +62,21 @@ namespace xt
         static void register_dispatching(mpl::vector<mpl::vector<T, R>, U...>);
 
         static void init();
-        static void dispatch(const zarray_impl& z1, zarray_impl& res, const zassign_args& args);
-        static size_t get_type_index(const zarray_impl& z1);
+
+        // this is a bit of a hack st we can use the same double dispatcher impl
+        // independent of the actual undispatched type list
+        template<class ... A>
+        static void dispatch(const zarray_impl& z1, zarray_impl& res, A && ... );
+
+        // this is a bit of a hack st we can use the same double dispatcher impl
+        // independent of the actual undispatched type list
+        template<class ... A>
+        static size_t get_type_index(const zarray_impl& z1, A && ...);
 
     private:
 
+        using undispatched_run_type_list = URL;
+        using undispatched_type_type_list = UTL;
         static zdouble_dispatcher& instance();
 
         zdouble_dispatcher();
@@ -77,8 +90,12 @@ namespace xt
         inline void register_dispatching_impl(mpl::vector<>);
 
         using zfunctor_type = get_zmapped_functor_t<F>;
-        using ztype_dispatcher = ztype_dispatcher_impl<mpl::vector<const zarray_impl>>;
-        using zrun_dispatcher = zrun_dispatcher_impl<mpl::vector<const zarray_impl, zarray_impl>>;
+        using ztype_dispatcher = ztype_dispatcher_impl<
+            mpl::vector<const zarray_impl>,
+            undispatched_type_type_list>;
+        using zrun_dispatcher = zrun_dispatcher_impl<
+            mpl::vector<const zarray_impl, zarray_impl>,
+            undispatched_run_type_list>;
 
         ztype_dispatcher m_type_dispatcher;
         zrun_dispatcher m_run_dispatcher;
@@ -111,7 +128,6 @@ namespace xt
         static size_t get_type_index(const zarray_impl& z1, const zarray_impl& z2);
 
     private:
-
         static ztriple_dispatcher& instance();
 
         ztriple_dispatcher();
@@ -153,6 +169,13 @@ namespace xt
 
     template <class F, size_t N, size_t M = 0>
     using zdispatcher_t = typename zdispatcher<F, N, M>::type;
+
+
+    template<class F>
+    using zreducer_dispatcher = zdouble_dispatcher<F,
+        mpl::vector<const zassign_args, const zreducer_options>,
+        mpl::vector<const zreducer_options>
+    >;
 
     /************************
      * zarray_impl_register *
@@ -261,54 +284,60 @@ namespace xt
      * zdouble_dispatcher implementation *
      *************************************/
 
-    template <class F>
+    template <class F, class URL, class UTL>
     template <class T, class R>
-    inline void zdouble_dispatcher<F>::insert()
+    inline void zdouble_dispatcher<F,URL, UTL>::insert()
     {
         instance().template insert_impl<T, R>();
     }
 
-    template <class F>
+    template <class F, class URL, class UTL>
     template <class T, class R, class... U>
-    inline void zdouble_dispatcher<F>::register_dispatching(mpl::vector<mpl::vector<T, R>, U...>)
+    inline void zdouble_dispatcher<F,URL, UTL>::register_dispatching(mpl::vector<mpl::vector<T, R>, U...>)
     {
         instance().register_dispatching_impl(mpl::vector<mpl::vector<T, R>, U...>());
     }
 
-    template <class F>
-    inline void zdouble_dispatcher<F>::init()
+    template <class F, class URL, class UTL>
+    inline void zdouble_dispatcher<F,URL, UTL>::init()
     {
         instance();
     }
 
-    template <class F>
-    inline void zdouble_dispatcher<F>::dispatch(const zarray_impl& z1, zarray_impl& res, const zassign_args& args)
+    // the variance template here is a bit of a hack st. we can use 
+    // the same dispatcher impl for the unary operations  and the reducers
+    template <class F, class URL, class UTL>
+    template<class ... A>
+    inline void zdouble_dispatcher<F,URL, UTL>::dispatch(const zarray_impl& z1, zarray_impl& res, A && ... args)
     {
-        instance().m_run_dispatcher.dispatch(z1, res, args);
+        instance().m_run_dispatcher.dispatch(z1, res, std::forward<A>(args) ...);
     }
 
-    template <class F>
-    inline size_t zdouble_dispatcher<F>::get_type_index(const zarray_impl& z1)
+    // the variance template here is a bit of a hack st. we can use 
+    // the same dispatcher impl for the unary operations  and the reducers
+    template <class F, class URL, class UTL>
+    template<class ... A>
+    inline size_t zdouble_dispatcher<F,URL, UTL>::get_type_index(const zarray_impl& z1,A && ... args)
     {
-        return instance().m_type_dispatcher.dispatch(z1);
+        return instance().m_type_dispatcher.dispatch(z1, std::forward<A>(args) ...);
     }
 
-    template <class F>
-    inline zdouble_dispatcher<F>& zdouble_dispatcher<F>::instance()
+    template <class F, class URL, class UTL>
+    inline zdouble_dispatcher<F,URL, UTL>& zdouble_dispatcher<F,URL, UTL>::instance()
     {
-        static zdouble_dispatcher<F> inst;
+        static zdouble_dispatcher<F,URL, UTL> inst;
         return inst;
     }
 
-    template <class F>
-    inline zdouble_dispatcher<F>::zdouble_dispatcher()
+    template <class F, class URL, class UTL>
+    inline zdouble_dispatcher<F,URL, UTL>::zdouble_dispatcher()
     {
         register_dispatching_impl(detail::unary_dispatching_types_t<F>());
     }
 
-    template <class F>
+    template <class F, class URL, class UTL>
     template <class T, class R>
-    inline void zdouble_dispatcher<F>::insert_impl()
+    inline void zdouble_dispatcher<F,URL, UTL>::insert_impl()
     {
         using arg_type = const ztyped_array<T>;
         using res_type = ztyped_array<R>;
@@ -316,16 +345,16 @@ namespace xt
         m_type_dispatcher.template insert<arg_type>(&zfunctor_type::template index<T>);
     }
 
-    template <class F>
+    template <class F, class URL, class UTL>
     template <class T, class R, class...U>
-    inline void zdouble_dispatcher<F>::register_dispatching_impl(mpl::vector<mpl::vector<T, R>, U...>)
+    inline void zdouble_dispatcher<F,URL, UTL>::register_dispatching_impl(mpl::vector<mpl::vector<T, R>, U...>)
     {
         insert_impl<T, R>();
         register_dispatching_impl(mpl::vector<U...>());
     }
 
-    template <class F>
-    inline void zdouble_dispatcher<F>::register_dispatching_impl(mpl::vector<>)
+    template <class F, class URL, class UTL>
+    inline void zdouble_dispatcher<F,URL, UTL>::register_dispatching_impl(mpl::vector<>)
     {
     }
 
@@ -482,6 +511,10 @@ namespace xt
     {
         insert_impl<float>();
         insert_impl<double>();
+        insert_impl<int32_t>();
+        insert_impl<uint32_t>();
+        insert_impl<int64_t>();
+        insert_impl<uint64_t>();
     }
 
     template <class T>
@@ -660,6 +693,24 @@ namespace xt
         return 0;
     }
 
+
+    template <class T>
+    inline int init_zreducer_dispatchers()
+    {
+        zreducer_dispatcher<zassign_init_value_functor>::init();
+
+        zreducer_dispatcher<zsum_zreducer_functor>::init();
+        zreducer_dispatcher<zprod_zreducer_functor>::init();
+        zreducer_dispatcher<zmean_zreducer_functor>::init();
+        zreducer_dispatcher<zvariance_zreducer_functor>::init();
+        zreducer_dispatcher<zstddev_zreducer_functor>::init();
+        zreducer_dispatcher<zamin_zreducer_functor>::init();
+        zreducer_dispatcher<zamax_zreducer_functor>::init();
+        zreducer_dispatcher<znorm_l0_zreducer_functor>::init();
+        zreducer_dispatcher<znorm_l1_zreducer_functor>::init();
+        return 0;
+    }
+
     /************************************
      * global dispatcher initialization *
      ************************************/
@@ -693,6 +744,7 @@ namespace xt
     template <class T = void>
     int init_zsystem()
     {
+        init_zreducer_dispatchers<T>();
         init_zoperator_dispatchers<T>();
         init_zmath_dispatchers<T>();
         return 0;

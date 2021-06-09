@@ -86,6 +86,9 @@ namespace xt
         const zarray_impl& get_implementation() const;
 
         template <class T>
+        bool can_get_array()const;
+
+        template <class T>
         xarray<T>& get_array();
 
         template <class T>
@@ -167,7 +170,7 @@ namespace xt
         : zarray(xarray<T>(t))
     {
     }
-    
+
     template <class T>
     inline zarray::zarray(std::initializer_list<
                               std::initializer_list<
@@ -276,6 +279,13 @@ namespace xt
     {
         return *p_impl;
     }
+
+    template <class T>
+    inline bool zarray::can_get_array()const
+    {
+        return dynamic_cast<ztyped_array<T>*>(p_impl.get()) != nullptr;
+    }
+
 
     template <class T>
     inline xarray<T>& zarray::get_array()

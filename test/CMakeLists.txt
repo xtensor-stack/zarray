@@ -156,6 +156,8 @@ set(ZARRAY_TESTS
     test_zarray.cpp
     test_zchunked_array.cpp
     test_zfunction.cpp
+    test_zreducer.cpp
+    test_zreducer_options.cpp
     test_zview.cpp)
 
 foreach(filename IN LISTS ZARRAY_TESTS)
