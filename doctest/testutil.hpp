@@ -1,0 +1,6 @@
+#define STRINGIFY(a) #a
+#define TEST(A,B) TEST_CASE( STRINGIFY(A##B) )
+#define EXPECT_EQ(A,B) CHECK_EQ(A,B)
+#define EXPECT_NE(A,B) CHECK_NE(A,B)
+#define EXPECT_TRUE(A) CHECK(A)
+#define EXPECT_FALSE(A) CHECK_FALSE(A)

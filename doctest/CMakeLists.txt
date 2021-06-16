@@ -11,17 +11,22 @@ find_package(Threads)
     find_package(doctest            REQUIRED)
 
 set(ZARRAY_TESTS
-    test_zarray.cpp)
+    test_zarray.cpp
+    test_zfunction.cpp
+    test_init.cpp
+    test_zview.cpp
+    test_zchunked_array.cpp
+)
 
 
 add_executable( doctest
     main.cpp
-    ${${PROJECT_NAME}_TESTS}
+    ${ZARRAY_TESTS}
 )
 
 
 target_include_directories(doctest PRIVATE ${ZARRAY_INCLUDE_DIR})
-target_link_libraries(doctest PRIVATE  doctest::doctest)
+target_link_libraries(doctest PRIVATE zarray doctest::doctest nlohmann_json::nlohmann_json)
 
 add_custom_target(xdoctest COMMAND doctest DEPENDS doctest)
 add_test(NAME xdoctest COMMAND doctest)
