@@ -98,6 +98,7 @@ target_compile_features(zarray INTERFACE cxx_std_14)
 
 target_link_libraries(zarray INTERFACE xtensor)
 
+OPTION(BUILD_DOCTESTS "zarray test suite" ON)
 OPTION(BUILD_TESTS "zarray test suite" OFF)
 OPTION(DOWNLOAD_GTEST "build gtest from downloaded sources" OFF)
 OPTION(CPP17 "enables C++17" OFF)
@@ -116,6 +117,12 @@ if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
 endif()
+
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(doctest)
+endif()
+
 
 # Installation
 # ============
