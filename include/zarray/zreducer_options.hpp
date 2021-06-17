@@ -217,12 +217,12 @@ namespace xt
         m_lazy = tuple_idx_of<xt::evaluation_strategy::immediate_type, tuple_type>::value == -1;
         m_keep_dims = tuple_idx_of<xt::keep_dims_type, tuple_type>::value != -1;
 
-        static constexpr std::size_t initial_val_idx = xtl::mpl::find_if<initial_tester, tuple_type>::value;
+        using  inital_val_idx_t = xtl::mpl::find_if<initial_tester, tuple_type>;
 
-        xtl::mpl::static_if<initial_val_idx != std::tuple_size<tuple_type>::value>([this, &options](auto no_compile)
+        xtl::mpl::static_if<inital_val_idx_t::value != std::tuple_size<tuple_type>::value>([this, &options](auto no_compile)
         {
-            // use no_compile to prevent compilation if initial_val_idx is out of bounds!
-            auto initial_value = no_compile(std::get<initial_val_idx != std::tuple_size<tuple_type>::value ? initial_val_idx : 0>(options)).value();
+            // use no_compile to prevent compilation if inital_val_idx_t::value is out of bounds!
+            auto initial_value = no_compile(std::get<inital_val_idx_t::value != std::tuple_size<tuple_type>::value ? inital_val_idx_t::value : 0>(options)).value();
             using inital_value_type = std::decay_t<decltype(initial_value)>;
             m_inital_value = std::make_shared<  make_scalar_wrapper_t<inital_value_type>  >(xscalar<inital_value_type>(initial_value));
         },[](auto /*np_compile*/){});
