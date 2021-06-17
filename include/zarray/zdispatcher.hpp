@@ -13,7 +13,7 @@
 #include <xtl/xmultimethods.hpp>
 
 #include "zdispatching_types.hpp"
-#include "zmath.hpp"
+#include "zfunctors.hpp"
 #include "zreducer_options.hpp"
 
 namespace xt

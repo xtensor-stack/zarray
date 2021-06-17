@@ -107,7 +107,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     endif()
   endif()
 else()
-  message(FATAL_ERROR "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
+  message(FATAL_ERROR  ${CMAKE_CXX_COMPILER_ID} "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
 if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
