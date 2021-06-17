@@ -276,7 +276,7 @@ namespace xt
 
 
     // forward declaration
-    template<class F, class E, typename detail::enable_zarray_t<std::decay_t<E>> * = nullptr>
+    template<class F, class E, typename detail::enable_zarray_t<std::decay_t<E>> *>
     auto make_zreducer(E && e, const zreducer_options & options);
 
     // forward declaration
