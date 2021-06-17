@@ -1,9 +1,9 @@
-jobs:
+`jobs:
   - job: 'Linux_1'
     strategy:
       matrix:
-        gcc_4:
-          gcc_version: '4.9'
+        # gcc_4:
+        #   gcc_version: '4.9'
         gcc_5_disable_xsimd:
           gcc_version: '5'
           disable_xsimd: 1
