@@ -11,15 +11,6 @@ namespace xt
     template <class CTE>
     class zscalar_wrapper;
 
-    namespace detail
-    {
-        template<class R, class T>
-        using enable_if_has_inital_value_t = std::enable_if_t<reducer_options<R,T>::has_initial_value>;
-
-        template<class R, class T>
-        using enable_if_has_no_inital_value_t = std::enable_if_t<!reducer_options<R,T>::has_initial_value>;
-    }
-
     template <class F, class CT>
     class zreducer;
 
@@ -45,6 +36,10 @@ namespace xt
     private:
         template<class T>
         using make_scalar_wrapper_t = zscalar_wrapper<xscalar<T>>;
+
+        template<class EVS>
+        void init_from_tuple(EVS && options);
+
     public:
 
 
@@ -57,19 +52,49 @@ namespace xt
 
 
         template <class EVS,
-            XTL_REQUIRES(is_reducer_options<std::decay_t<EVS>>)
+            XTL_REQUIRES(
+                is_reducer_options<std::decay_t<EVS>>
+            )
         >
-        zreducer_options(EVS && options);
+        zreducer_options(EVS && options)
+        :   m_axes(),
+            m_keep_dims(),
+            m_lazy(),
+            m_inital_value()
+        {
+            this->init_from_tuple(std::forward<EVS>(options));
+        }
+
 
         template <class A, class EVS = DEFAULT_STRATEGY_REDUCERS,
-            XTL_REQUIRES(xtl::negation<is_reducer_options<A>>,is_reducer_options<EVS>)
+            XTL_REQUIRES(
+                xtl::negation<is_reducer_options<A>>,
+                is_reducer_options<EVS>,
+                xtl::negation<std::is_same<std::decay_t<A>, zreducer_options>>
+            )
         >
-        zreducer_options(A&& axes,EVS && options = EVS());
+        zreducer_options(A&& axes, EVS && options = EVS())
+        :   m_axes(axes.begin(), axes.end()),
+            m_keep_dims(),
+            m_lazy(),
+            m_inital_value()
+        {
+
+            this->init_from_tuple(std::forward<EVS>(options));
+        }
 
         template <class I, std::size_t N,  class EVS = DEFAULT_STRATEGY_REDUCERS,
             XTL_REQUIRES(is_reducer_options<EVS>)
         >
-        zreducer_options( const I(&axes)[N], EVS && options = EVS());
+        zreducer_options( const I(&axes)[N], EVS && options = EVS())
+        :   m_axes(axes, axes+N),
+            m_keep_dims(),
+            m_lazy(),
+            m_inital_value()
+        {
+
+            this->init_from_tuple(std::forward<EVS>(options));
+        }
 
         template<class T>
         bool can_get_inital_value() const;
@@ -93,11 +118,7 @@ namespace xt
         void visit_reducer_options( F && f) const;
 
     private:
-        template<class EVS,
-            XTL_REQUIRES(xtl::negation<std::is_same<std::decay_t<EVS>,std::tuple<>>>)
-        >
-        void init_from_tuple(EVS && options);
-        void init_from_tuple(const std::tuple<> &);
+
 
         template<class F, class O>
         void handle_eval_strategie(F && f, const bool force_lazy, O && options) const;
@@ -126,60 +147,6 @@ namespace xt
     {}
 
 
-    template <class EVS,
-        XTL_REQUIRES(is_reducer_options<std::decay_t<EVS>>)
-    >
-    inline zreducer_options::zreducer_options
-    (
-        EVS && options
-    )
-    :   m_axes(),
-        m_keep_dims(),
-        m_lazy(),
-        m_inital_value()
-    {
-        this->init_from_tuple(std::forward<EVS>(options));
-    }
-
-    template <class A, class EVS = DEFAULT_STRATEGY_REDUCERS,
-        XTL_REQUIRES(
-            xtl::negation<is_reducer_options<A>>,
-            is_reducer_options<EVS>
-        )
-    >
-    inline zreducer_options::zreducer_options
-    (
-        A&& axes,
-        EVS && options
-    )
-    :   m_axes(axes.begin(), axes.end()),
-        m_keep_dims(),
-        m_lazy(),
-        m_inital_value()
-    {
-
-        this->init_from_tuple(std::forward<EVS>(options));
-    }
-
-
-    template <class I, std::size_t N,  class EVS = DEFAULT_STRATEGY_REDUCERS,
-        XTL_REQUIRES(
-            is_reducer_options<EVS>
-        )
-    >
-    inline zreducer_options::zreducer_options
-    (
-        const I(&axes)[N],
-        EVS && options
-    )
-    :   m_axes(axes, axes+N),
-        m_keep_dims(),
-        m_lazy(),
-        m_inital_value()
-    {
-
-        this->init_from_tuple(std::forward<EVS>(options));
-    }
 
     template<class T>
     inline bool zreducer_options::can_get_inital_value() const
@@ -243,9 +210,7 @@ namespace xt
         this->handle_eval_strategie(std::forward<F>(f), false /*force lazy*/, std::tuple<>());
     }
 
-    template<class EVS,
-        XTL_REQUIRES(xtl::negation<std::is_same<std::decay_t<EVS>,std::tuple<>>>)
-    >
+    template<class EVS>
     inline void zreducer_options::init_from_tuple(EVS && options)
     {
         using tuple_type = std::decay_t<EVS>;
@@ -261,10 +226,6 @@ namespace xt
             using inital_value_type = std::decay_t<decltype(initial_value)>;
             m_inital_value = std::make_shared<  make_scalar_wrapper_t<inital_value_type>  >(xscalar<inital_value_type>(initial_value));
         },[](auto /*np_compile*/){});
-    }
-
-    inline void zreducer_options::init_from_tuple(const std::tuple<> &)
-    {
     }
 
     template<class F, class O>
