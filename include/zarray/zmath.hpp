@@ -346,24 +346,25 @@ namespace xt
     template <class T, class R>
     inline void zreducer_functor<F>::run
     (
-        const ztyped_array<T>& in,ztyped_array<R>& zres,
+        const ztyped_array<T>& input_array,
+        ztyped_array<R>& zres,
         const zassign_args& assign_args,
         const zreducer_options& options
     )
     {
         if (!assign_args.chunk_assign)
         {
-            options.visit_reducer_options<T>(false /*force_lazy*/,[&](auto&&... reduce_args)
+            options.visit_reducer_options<T>(false /*force_lazy*/,[&assign_args, &input_array, &zres](auto&&... reduce_args)
             {
-                auto res_expr = F::run(in.get_array(), std::forward<decltype(reduce_args)>(reduce_args)...);
+                auto res_expr = F::run(input_array.get_array(), std::forward<decltype(reduce_args)>(reduce_args)...);
                 zassign_wrapped_expression(zres, std::move(res_expr), assign_args);
             });
         }
         else
         {
-            options.visit_reducer_options<T>(true /*force_lazy*/, [&](auto&&... reduce_args)
+            options.visit_reducer_options<T>(true /*force_lazy*/, [&assign_args, &input_array, &zres](auto&&... reduce_args)
             {
-                auto res_expr = F::run(in.get_array(), std::forward<decltype(reduce_args)>(reduce_args)...);
+                auto res_expr = F::run(input_array.get_array(), std::forward<decltype(reduce_args)>(reduce_args)...);
                 auto chunk_res = xt::strided_view(std::move(res_expr), assign_args.slices());
                 zassign_wrapped_expression(zres, std::move(chunk_res), assign_args);
             });
@@ -374,14 +375,14 @@ namespace xt
     template <class T>
     inline std::size_t zreducer_functor<F>::index
     (
-        const ztyped_array<T>& in,
+        const ztyped_array<T>& input_array,
         const zreducer_options& options
     )
     {
         std::size_t result;
-        options.visit_reducer_options([&](auto&&... reduce_args)
+        options.visit_reducer_options([&result, &input_array](auto&&... reduce_args)
         {
-            using expr_type = decltype(F::run(in.get_array(), std::forward<decltype(reduce_args)>(reduce_args)...));
+            using expr_type = decltype(F::run(input_array.get_array(), std::forward<decltype(reduce_args)>(reduce_args)...));
             using expr_value_type = typename std::decay_t<expr_type>::value_type;
             result = ztyped_array<expr_value_type>::get_class_static_index();
         });
