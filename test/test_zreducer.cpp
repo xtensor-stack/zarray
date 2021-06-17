@@ -38,7 +38,7 @@ namespace xt
             auto reducer = make_zreducer<zsum_zreducer_functor>(za, zreducer_options{});
             using reducer_type = std::decay_t<decltype(reducer)>;
 
-            static_assert(std::is_same<should_reducer_type, reducer_type>::value);
+            static_assert(std::is_same<should_reducer_type, reducer_type>::value, "types are not the same");
         }
         {
 
@@ -47,7 +47,7 @@ namespace xt
             auto reducer = make_zreducer<zsum_zreducer_functor>(zarray{1.0,2.0}, zreducer_options{});
             using reducer_type = std::decay_t<decltype(reducer)>;
 
-            static_assert(std::is_same<should_reducer_type, reducer_type>::value);
+            static_assert(std::is_same<should_reducer_type, reducer_type>::value, "types are not the same");
         }
     }
 
