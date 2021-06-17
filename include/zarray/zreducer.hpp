@@ -3,11 +3,65 @@
 
 #include "xtensor/xexpression.hpp"
 #include "xtensor/xreducer.hpp"
+
 #include "zdispatcher.hpp"
 #include "zreducer_options.hpp"
 
 namespace xt
 {
+
+    template <class XF>
+    struct get_zmapped_functor;
+
+    struct zassign_init_value_functor
+    {
+
+        template <class T, class R>
+        static void run(
+            const ztyped_array<T>& z,
+            ztyped_array<R>& zres,
+            const zassign_args& args,
+            const zreducer_options&
+        );
+        template <class T>
+        static std::size_t index(const ztyped_array<T>&, const zreducer_options& );
+    };
+    template <> 
+    struct get_zmapped_functor<zassign_init_value_functor>
+    {
+        using type = zassign_init_value_functor;
+    };
+
+    template <class T, class R>
+    inline void zassign_init_value_functor::run
+    (
+        const ztyped_array<T>& z,
+        ztyped_array<R>& zres,
+        const zassign_args& args,
+        const zreducer_options&
+    )
+    {
+        if (!args.chunk_assign)
+        {
+            // write the initial value which is wrapped in a zscalar_wrapper 
+            // to the first position of the result array
+            *(zres.get_array().begin()) = static_cast<R>(*(z.get_array().begin()));
+        }
+        else
+        {
+            auto init_value = static_cast<R>(*(z.get_array().begin()));
+
+            auto & chunked_array = dynamic_cast<ztyped_chunked_array<R>&>(zres);
+            auto chunk_iter = args.chunk_iter;
+            auto shape = chunked_array.chunk_shape();
+            auto tmp = xarray<R>::from_shape(shape);
+            tmp.fill(init_value);
+            chunked_array.assign_chunk(std::move(tmp), chunk_iter);
+        }
+    }
+
+
+
 
     template <class F, class CT>
     class zreducer : public xexpression<zreducer<F, CT>>

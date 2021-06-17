@@ -20,6 +20,7 @@
 #include "zfunction.hpp"
 #include "zmath.hpp"
 #include "zwrappers.hpp"
+#include "zinit.hpp"
 
 namespace xt
 {
