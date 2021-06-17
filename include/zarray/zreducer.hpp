@@ -6,6 +6,7 @@
 
 #include "zdispatcher.hpp"
 #include "zreducer_options.hpp"
+#include "zarray.hpp"
 
 namespace xt
 {
