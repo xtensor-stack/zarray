@@ -50,23 +50,6 @@ namespace xt
         EXPECT_EQ(expa, res);
     }
 
-    TEST(zfunction, dispatching_int)
-    {
-        using dispatcher_type = zdispatcher_t<math::exp_fun, 1>;
-        dispatcher_type::init();
-
-        xarray<int> a = {1};
-        xarray<int> expa = {int(std::exp(1))};
-        auto res = xarray<int>::from_shape({1});
-        zarray za(a);
-        zarray zres(res);
-
-        zassign_args args;
-        dispatcher_type::dispatch(za.get_implementation(), zres.get_implementation(), args);
-
-        EXPECT_EQ(expa, res);
-    }
-
 
     TEST(zfunction, assign_to)
     {
