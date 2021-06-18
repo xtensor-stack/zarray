@@ -11,11 +11,14 @@
 #define XTENSOR_ZMATH_HPP
 
 #include "xtensor/xmath.hpp"
+#include "xtensor/xnorm.hpp"
 #include "zassign.hpp"
 #include "zwrappers.hpp"
+#include "zmpl.hpp"
 
 namespace xt
 {
+
     template <class XF>
     struct get_zmapped_functor;
     
@@ -27,81 +30,6 @@ namespace xt
     struct get_zmapped_functor<XFUN>                                               \
     { using type = ZFUN; }
 
-    namespace detail
-    {
-        struct xassign_dummy_functor {};
-        struct xmove_dummy_functor {};
-    }
-
-    struct zassign_functor
-    {
-        template <class T, class R>
-        static void run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args& args)
-        {
-            if (!args.chunk_assign)
-                zassign_wrapped_expression(zres, z.get_array(), args);
-            else
-                zassign_wrapped_expression(zres,  z.get_chunk(args.slices()), args);
-        }
-
-        template <class T>
-        static size_t index(const ztyped_array<T>&)
-        {
-            return ztyped_array<T>::get_class_static_index();
-        }
-    };
-    XTENSOR_ZMAPPED_FUNCTOR(zassign_functor, detail::xassign_dummy_functor);
-
-    template <class T, class U, class R = void>
-    using enable_same_types_t = std::enable_if_t<std::is_same<T, U>::value, R>;
-
-    template <class T, class U, class R = void>
-    using disable_same_types_t = std::enable_if_t<!std::is_same<T, U>::value, R>;
-    
-    struct zmove_functor
-    {
-        template <class T, class R>
-        static disable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args& args)
-        {
-            // resize is not called in the move constructor of zarray
-            // to avoid useless dyanmic allocation if RHS is about
-            // to be moved, therefore we have to call it here.
-            zres.resize(z.shape());
-            if (!args.chunk_assign)
-                zassign_wrapped_expression(zres, z.get_array(), args);
-            else
-                zassign_wrapped_expression(zres, z.get_chunk(args.slices()), args);
-        }
-
-        template <class T, class R>
-        static enable_same_types_t<T, R> run(const ztyped_array<T>& z, ztyped_array<R>& zres, const zassign_args& args)
-        {
-            if (zres.is_array())
-            {
-                ztyped_array<T>& uz = const_cast<ztyped_array<T>&>(z);
-                xarray<T>& ar = uz.get_array();
-                zres.get_array() = std::move(ar);
-            }
-            else if (zres.is_chunked())
-            {
-                zassign_wrapped_expression(zres, z.get_chunk(args.slices()), args);
-            }
-            else
-            {
-                using array_type = ztyped_expression_wrapper<T>;
-                array_type& lhs = static_cast<array_type&>(zres);
-                ztyped_array<T>& uz = const_cast<ztyped_array<T>&>(z);
-                lhs.assign(std::move(uz.get_array()));
-            }
-        }
-
-        template <class T>
-        static size_t index(const ztyped_array<T>&)
-        {
-            return ztyped_array<T>::get_class_static_index();
-        }
-    };
-    XTENSOR_ZMAPPED_FUNCTOR(zmove_functor, detail::xmove_dummy_functor);
 
 #define XTENSOR_UNARY_ZOPERATOR(ZNAME, XOP, XFUN)                                                  \
     struct ZNAME                                                                                   \
@@ -270,11 +198,14 @@ namespace xt
     XTENSOR_UNARY_ZFUNCTOR(zisinf, xt::isinf, math::isinf_fun);
     XTENSOR_UNARY_ZFUNCTOR(zisnan, xt::isnan, math::isnan_fun);
 
+
+
 #undef XTENSOR_BINARY_ZFUNCTOR
 #undef XTENSOR_UNARY_ZFUNCTOR
 #undef XTENSOR_BINARY_ZOPERATOR
 #undef XTENSOR_UNARY_ZOPERATOR
 #undef XTENSOR_ZMAPPED_FUNCTOR
+#undef XTENSOR_ZREDUCER_FUNCTOR_HELPER
 
 }
 

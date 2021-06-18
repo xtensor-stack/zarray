@@ -12,6 +12,7 @@
 
 #include <xtl/xplatform.hpp>
 #include <xtl/xhalf_float.hpp>
+#include <xtl/xmeta_utils.hpp>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xchunked_array.hpp>
 #include <xtensor/xchunked_view.hpp>
@@ -31,12 +32,15 @@ namespace xt
     class zchunked_wrapper;
 
     template <class CTE>
+    class zscalar_wrapper;
+
+    template <class CTE>
     class zexpression_wrapper;
 
     /******************
      * zarray builder *
      ******************/
-    
+
     namespace detail
     {
         template <class E>
@@ -60,6 +64,16 @@ namespace xt
         };
 
         template <class E>
+        struct is_xscalar : std::false_type
+        {
+        };
+
+        template <class T>
+        struct is_xscalar<xscalar<T>> : std::true_type
+        {
+        };
+
+        template <class E>
         struct is_xstrided_view : std::false_type
         {
         };
@@ -73,13 +87,13 @@ namespace xt
         struct zwrapper_builder
         {
             using closure_type = xtl::closure_type_t<E>;
-            using wrapper_type = std::conditional_t<is_xarray<std::decay_t<E>>::value,
-                                                    zarray_wrapper<closure_type>,
-                                                    std::conditional_t<is_chunked_array<std::decay_t<E>>::value,
-                                                                       zchunked_wrapper<closure_type>,
-                                                                       zexpression_wrapper<closure_type>
-                                                                      >
-                                                    >;
+
+            using wrapper_type =  xtl::mpl::switch_t<
+                is_xarray<std::decay_t<E>>,         zarray_wrapper<closure_type>,
+                is_chunked_array<std::decay_t<E>>,  zchunked_wrapper<closure_type>,
+                is_xscalar<std::decay_t<E>>,        zscalar_wrapper<closure_type>,
+                std::true_type,                     zexpression_wrapper<closure_type>
+            >;
 
             template <class OE>
             static wrapper_type* run(OE&& e)

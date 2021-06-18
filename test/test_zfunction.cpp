@@ -50,6 +50,7 @@ namespace xt
         EXPECT_EQ(expa, res);
     }
 
+
     TEST(zfunction, assign_to)
     {
         using exp_dispatcher_type = zdispatcher_t<math::exp_fun, 1>;

@@ -14,6 +14,7 @@
 #include <utility>
 
 #include "zdispatcher.hpp"
+#include "zarray_impl_register.hpp"
 
 namespace xt
 {
