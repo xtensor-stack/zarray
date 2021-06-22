@@ -1,36 +1,14 @@
-#ifndef XTENSOR_ZTEST_UTILS_HPP
-#define XTENSOR_ZTEST_UTILS_HPP
+#ifndef TEST_COMMON_HPP
+#define TEST_COMMON_HPP
 
-#include "gtest/gtest.h"
+#include "test_common_macros.hpp"
 
-#define HETEROGEN_PARAMETRIZED_TEST_SUITE(NAME, TEST_FUNC)\
-    template<class T>\
-    struct NAME : public TypeHolder<T>\
-    {\
-    };\
-    TYPED_TEST_SUITE(NAME, testing_types_t<augment_t<std::decay_t<decltype(TEST_FUNC())>>>)\
+#include <utility>
+#include <xtensor/xreducer.hpp> // tuple_idx_of
+
 
 namespace xt
 {
-    template<typename T>
-    struct TypeHolder : public testing::Test
-    {
-        using type = T;
-    };
-
-    template<class T>
-    class testing_types_impl;
-
-    template<class ... ARGS>
-    class testing_types_impl<std::tuple<ARGS ...>>
-    {
-    public:
-        using type = ::testing::Types<ARGS ...>;
-    };
-
-    template<class T>
-    using testing_types_t = typename testing_types_impl<T>::type;
-
     namespace detail
     {
         template< class SEQ, class T>
@@ -44,6 +22,19 @@ namespace xt
             using type = std::tuple< helper<I> ...>;
         };
     }
+
+    // template<class T>
+    // class testing_types_impl;
+
+    // template<class ... ARGS>
+    // class testing_types_impl<std::tuple<ARGS ...>>
+    // {
+    // public:
+    //     using type = ::testing::Types<ARGS ...>;
+    // };
+
+    // template<class T>
+    // using testing_types_t = typename testing_types_impl<T>::type;
 
     template<class T>
     struct augment
@@ -68,3 +59,4 @@ namespace xt
 }
 
 #endif
+

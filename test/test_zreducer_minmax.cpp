@@ -7,11 +7,9 @@
 * The full license is in the file LICENSE, distributed with this software. *
 ****************************************************************************/
 
-#include "gtest/gtest.h"
-
-#include "xtensor/xnorm.hpp"
+#include "test_common.hpp"
 #include "zarray/zarray.hpp"
-#include "test_utils.hpp"
+
 
 namespace xt
 {
@@ -24,8 +22,7 @@ namespace xt
                             [](auto && ... args){return zt::amax(std::forward<decltype(args)>(args)...);})
             );
     }
-    HETEROGEN_PARAMETRIZED_TEST_SUITE(REDUCERS_AMIN_AMAX, params_amin_amax);
-    TYPED_TEST(REDUCERS_AMIN_AMAX, reducers_amin_amax)
+    HETEROGEN_PARAMETRIZED_DEFINE(REDUCERS_AMIN_AMAX)
     {
         using value_type = double;
         auto params = get_param<TypeParam>(params_amin_amax());
@@ -52,5 +49,6 @@ namespace xt
         EXPECT_EQ(res, should_res);
 
     }
+    HETEROGEN_PARAMETRIZED_TEST_APPLY(REDUCERS_AMIN_AMAX, params_amin_amax);
 }
 

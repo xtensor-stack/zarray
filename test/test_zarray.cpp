@@ -1,20 +1,16 @@
-/***************************************************************************
-* Copyright (c) Johan Mabille, Sylvain Corlay and Wolf Vollprecht          *
-* Copyright (c) QuantStack                                                 *
-*                                                                          *
-* Distributed under the terms of the BSD 3-Clause License.                 *
-*                                                                          *
-* The full license is in the file LICENSE, distributed with this software. *
-****************************************************************************/
+#include "test_common.hpp"
 
-#include <gtest/gtest.h>
 #include <zarray/zarray.hpp>
 #include <xtl/xplatform.hpp>
 #include <xtl/xhalf_float.hpp>
 
-namespace xt
-{
-    template <class T>
+TEST_SUITE_BEGIN("zarray");
+
+
+namespace xt{
+
+
+  template <class T>
     void check_xarray_data_type(const std::string& data_type)
     {
         auto a = xarray<T>();
@@ -270,4 +266,10 @@ namespace xt
         check_xarray_data_type<float>(s + "f4");
         check_xarray_data_type<double>(s + "f8");
     }
+
+
+
+
 }
+
+TEST_SUITE_END(); // end of testsuite gm
