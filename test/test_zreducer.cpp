@@ -13,6 +13,8 @@
 #include "zarray/zreducer.hpp"
 #include "zarray/zreducers.hpp"
 
+TEST_SUITE_BEGIN("zreducers");
+
 namespace xt
 {
     using axes_vec = xt::dynamic_shape<std::size_t>;
@@ -299,3 +301,4 @@ namespace xt
     }
 }
 
+TEST_SUITE_END();

@@ -11,6 +11,7 @@
 #include "xtensor/xnorm.hpp"
 #include "zarray/zarray.hpp"
 
+TEST_SUITE_BEGIN("zreducers");
 
 namespace xt
 {
@@ -53,4 +54,7 @@ namespace xt
     }
     HETEROGEN_PARAMETRIZED_TEST_APPLY(REDUCERS_NORMS, params_norm);
 }
+
+TEST_SUITE_END();
+
 

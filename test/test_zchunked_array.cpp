@@ -14,8 +14,8 @@
 #include <xtl/xhalf_float.hpp>
 
 
-
 TEST_SUITE_BEGIN("zchunked_array");
+
 namespace xt
 {
     TEST(zchunked_array, chunked_array)
@@ -133,4 +133,5 @@ namespace xt
         EXPECT_EQ(a, b);
     }
 }
+
 TEST_SUITE_END(); 

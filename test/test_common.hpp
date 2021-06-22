@@ -23,19 +23,6 @@ namespace xt
         };
     }
 
-    // template<class T>
-    // class testing_types_impl;
-
-    // template<class ... ARGS>
-    // class testing_types_impl<std::tuple<ARGS ...>>
-    // {
-    // public:
-    //     using type = ::testing::Types<ARGS ...>;
-    // };
-
-    // template<class T>
-    // using testing_types_t = typename testing_types_impl<T>::type;
-
     template<class T>
     struct augment
     {

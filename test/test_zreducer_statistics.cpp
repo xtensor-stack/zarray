@@ -10,6 +10,8 @@
 #include "test_common.hpp"
 #include "zarray/zarray.hpp"
 
+TEST_SUITE_BEGIN("zreducers");
+
 namespace xt
 {
 
@@ -52,3 +54,4 @@ namespace xt
     HETEROGEN_PARAMETRIZED_TEST_APPLY(REDUCERS_STATISTICS, params_statistics);
 }
 
+TEST_SUITE_END(); 

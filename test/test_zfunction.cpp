@@ -141,4 +141,4 @@ namespace xt
         EXPECT_EQ(zres.get_array<double>(), expected);
     }
 }
-TEST_SUITE_END(); // end of testsuite gm
+TEST_SUITE_END();

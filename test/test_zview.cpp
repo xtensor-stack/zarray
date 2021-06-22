@@ -16,9 +16,8 @@
 #include "xtensor/xview.hpp"
 #include "test_init.hpp"
 
-
-
 TEST_SUITE_BEGIN("zview");
+
 namespace xt
 {
     namespace fs = ghc::filesystem;

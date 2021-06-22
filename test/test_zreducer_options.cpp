@@ -10,9 +10,10 @@
 #include "test_common.hpp"
 #include "zarray/zarray.hpp"
 
+TEST_SUITE_BEGIN("zreducers");
+
 namespace xt
 {
-
     using axes_vec = xt::dynamic_shape<std::size_t>;
 
     TEST(zreducer_options, options)
@@ -55,6 +56,6 @@ namespace xt
             EXPECT_FALSE(opts.has_initial_value());
         }
     }
-
 }
 
+TEST_SUITE_END();
