@@ -98,7 +98,7 @@ target_compile_features(zarray INTERFACE cxx_std_14)
 
 target_link_libraries(zarray INTERFACE xtensor)
 
-OPTION(BUILD_TESTS "zarray test suite" ON)
+OPTION(BUILD_TESTS "zarray test suite" OFF)
 OPTION(DOWNLOAD_GTEST "build gtest from downloaded sources" OFF)
 OPTION(CPP17 "enables C++17" OFF)
 OPTION(CPP20 "enables C++20 (experimental)" OFF)

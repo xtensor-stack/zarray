@@ -15,7 +15,7 @@ steps:
       if [[ $(enable_cpp17) == 1 ]]; then
         CMAKE_EXTRA_ARGS="$CMAKE_EXTRA_ARGS -DCPP17=ON";
       fi
-      cmake -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX $CMAKE_EXTRA_ARGS -DDOWNLOAD_GTEST=ON $(Build.SourcesDirectory)
+      cmake -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX $CMAKE_EXTRA_ARGS -DBUILD_TESTS=ON $(Build.SourcesDirectory)
     displayName: Configure zarray
     workingDirectory: $(Build.BinariesDirectory)
 

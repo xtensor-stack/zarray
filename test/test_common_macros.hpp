@@ -24,9 +24,6 @@
 
 #define EXPECT_DOUBLE_EQ(x,y)   CHECK(x == doctest::Approx(y));
 
-#define SCOPED_TRACE(A) CAPTURE(A)
-
-
 #define HETEROGEN_PARAMETRIZED_DEFINE(ID)\
     TEST_CASE_TEMPLATE_DEFINE(#ID, TypeParam, ID)
 
