@@ -12,6 +12,9 @@
 
 #include "xtensor/xmath.hpp"
 #include "xtensor/xnorm.hpp"
+#include "xtensor/xtensor.hpp"
+#include "xtensor/xarray.hpp"
+
 #include "zassign.hpp"
 #include "zreducer.hpp"
 #include "zreducer_options.hpp"

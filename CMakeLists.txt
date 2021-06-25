@@ -97,6 +97,7 @@ target_include_directories(zarray INTERFACE
 target_compile_features(zarray INTERFACE cxx_std_14)
 
 target_link_libraries(zarray INTERFACE xtensor)
+target_link_libraries(zarray INTERFACE nlohmann_json::nlohmann_json)
 
 OPTION(BUILD_TESTS "zarray test suite" OFF)
 OPTION(DOWNLOAD_GTEST "build gtest from downloaded sources" OFF)

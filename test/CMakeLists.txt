@@ -113,8 +113,6 @@ else()
   message(FATAL_ERROR  ${CMAKE_CXX_COMPILER_ID} "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
-include_directories(${GTEST_INCLUDE_DIRS} SYSTEM)
-
 set(ZARRAY_TESTS
     test_init.cpp
     test_zarray.cpp
@@ -125,7 +123,8 @@ set(ZARRAY_TESTS
     test_zreducer_norms.cpp
     test_zreducer_statistics.cpp
     test_zreducer_minmax.cpp
-    test_zview.cpp)
+    test_zview.cpp
+    test_zexpression_tree.cpp)
 
 foreach(filename IN LISTS ZARRAY_TESTS)
     string(REPLACE ".cpp" "" targetname ${filename})

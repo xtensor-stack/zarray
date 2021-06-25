@@ -10,6 +10,8 @@
 #ifndef XTENSOR_ZARRAY_IMPL_HPP
 #define XTENSOR_ZARRAY_IMPL_HPP
 
+#include <nlohmann/json.hpp>
+
 #include <xtl/xplatform.hpp>
 #include <xtl/xhalf_float.hpp>
 #include <xtl/xmeta_utils.hpp>

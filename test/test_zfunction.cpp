@@ -140,5 +140,35 @@ namespace xt
 
         EXPECT_EQ(zres.get_array<double>(), expected);
     }
+
+
+    TEST(zfunction, math_operator_extended)
+    {
+        using add_dispatcher_type = zdispatcher_t<detail::plus, 2>;
+        add_dispatcher_type::init();
+
+        xarray<double> a = {{1, 1}, {1, 1}};
+        xarray<double> b = {{2, 2}, {2, 2}};
+        xarray<double> c = {{3, 3}, {3, 3}};
+        xarray<double> d = {{4, 4}, {4, 4}};
+
+        auto res = xarray<double>::from_shape({2, 2});
+
+        zarray za(a);
+        zarray zb(b);
+        zarray zc(c);
+        zarray zd(d);
+        zarray zres(res);
+
+        auto f = ((za+zb) + (zc+zd)) + zd;
+
+
+        zassign_args args;
+
+        f.assign_to(zres.get_implementation(), args);
+
+        auto expected = xt::eval((a+b) + (c+d) + d);
+        EXPECT_EQ(res, expected);
+    }
 }
 TEST_SUITE_END();

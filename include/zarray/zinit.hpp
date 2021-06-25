@@ -10,7 +10,8 @@
 #ifndef XTENSOR_ZINIT_HPP
 #define XTENSOR_ZINIT_HPP
 
-
+#include "xtensor/xmath.hpp"
+#include "xtensor/xnorm.hpp"
 
 #include "zdispatcher.hpp"
 #include "zdispatching_types.hpp"
@@ -213,6 +214,8 @@ namespace xt
         zreducer_dispatcher<znorm_l1_zreducer_functor>::init();
         zreducer_dispatcher<znorm_l2_zreducer_functor>::init();
         zreducer_dispatcher<znorm_sq_zreducer_functor>::init();
+        
+        // THESE NORMS CANNOT BE INSTANTIATED WITH ALL TYPES?
         zreducer_dispatcher<znorm_linf_zreducer_functor>::init();
         zreducer_dispatcher<znorm_lp_to_p_zreducer_functor>::init();
         zreducer_dispatcher<znorm_induced_l1_zreducer_functor>::init();
