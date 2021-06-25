@@ -104,9 +104,6 @@ OPTION(CPP17 "enables C++17" OFF)
 OPTION(CPP20 "enables C++20 (experimental)" OFF)
 OPTION(DISABLE_MSVC_ITERATOR_CHECK "Disable the MVSC iterator check" ON)
 
-if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
-    set(BUILD_TESTS ON)
-endif()
 
 if(MSVC AND DISABLE_MSVC_ITERATOR_CHECK)
     add_compile_definitions($<$<CONFIG:Debug>:_ITERATOR_DEBUG_LEVEL=0>)

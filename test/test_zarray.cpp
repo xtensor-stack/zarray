@@ -7,14 +7,17 @@
 * The full license is in the file LICENSE, distributed with this software. *
 ****************************************************************************/
 
-#include <gtest/gtest.h>
+#include "test_common.hpp"
+
 #include <zarray/zarray.hpp>
 #include <xtl/xplatform.hpp>
 #include <xtl/xhalf_float.hpp>
 
-namespace xt
-{
-    template <class T>
+TEST_SUITE_BEGIN("zarray");
+
+namespace xt{
+
+  template <class T>
     void check_xarray_data_type(const std::string& data_type)
     {
         auto a = xarray<T>();
@@ -271,3 +274,5 @@ namespace xt
         check_xarray_data_type<double>(s + "f8");
     }
 }
+
+TEST_SUITE_END(); // end of testsuite gm

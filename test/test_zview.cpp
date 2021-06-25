@@ -7,13 +7,16 @@
 * The full license is in the file LICENSE, distributed with this software. *
 ****************************************************************************/
 
-#include "gtest/gtest.h"
+#include "test_common.hpp"
+
 #include "zarray/zarray.hpp"
 #include "xtensor-io/xchunk_store_manager.hpp"
 #include "xtensor-io/xio_binary.hpp"
 #include "xtensor-io/xio_disk_handler.hpp"
 #include "xtensor/xview.hpp"
 #include "test_init.hpp"
+
+TEST_SUITE_BEGIN("zview");
 
 namespace xt
 {
@@ -103,3 +106,5 @@ namespace xt
         EXPECT_EQ(za.get_array<double>(), expected);
     }
 }
+
+TEST_SUITE_END(); 

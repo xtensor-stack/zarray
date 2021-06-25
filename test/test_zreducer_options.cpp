@@ -7,14 +7,13 @@
 * The full license is in the file LICENSE, distributed with this software. *
 ****************************************************************************/
 
-#include "gtest/gtest.h"
+#include "test_common.hpp"
 #include "zarray/zarray.hpp"
-#include "zarray/zreducer.hpp"
-#include "zarray/zmath.hpp"
+
+TEST_SUITE_BEGIN("zreducers");
 
 namespace xt
 {
-
     using axes_vec = xt::dynamic_shape<std::size_t>;
 
     TEST(zreducer_options, options)
@@ -57,6 +56,6 @@ namespace xt
             EXPECT_FALSE(opts.has_initial_value());
         }
     }
-
 }
 
+TEST_SUITE_END();

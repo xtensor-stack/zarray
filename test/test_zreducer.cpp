@@ -7,13 +7,13 @@
 * The full license is in the file LICENSE, distributed with this software. *
 ****************************************************************************/
 
-#include "gtest/gtest.h"
+#include "test_common.hpp"
 
 #include "zarray/zarray.hpp"
 #include "zarray/zreducer.hpp"
 #include "zarray/zreducers.hpp"
 
-#include "test_utils.hpp"
+TEST_SUITE_BEGIN("zreducers");
 
 namespace xt
 {
@@ -43,7 +43,8 @@ namespace xt
     }
 
     // tests where axis and options are given
-    auto axis_and_options_params(){
+    auto axis_and_options_params()
+    {
         return std::make_tuple(
             std::make_tuple(axes_vec{},         keep_dims),
             std::make_tuple(axes_vec{},         xt::evaluation_strategy::lazy),
@@ -95,11 +96,9 @@ namespace xt
             std::make_tuple(axes_vec{0,1,2},    initial(1.0f)|xt::evaluation_strategy::immediate)
         );
     }
-    HETEROGEN_PARAMETRIZED_TEST_SUITE(SHAPE_TEST_WITH_AXIS, axis_and_options_params);
-    TYPED_TEST(SHAPE_TEST_WITH_AXIS, with_axis)
+    HETEROGEN_PARAMETRIZED_DEFINE(SHAPE_TEST_WITH_AXIS)
     {
         auto params = get_param<TypeParam>(axis_and_options_params());
-
         auto && axes = std::get<0>(params);
         auto && options = std::get<1>(params);
 
@@ -165,6 +164,7 @@ namespace xt
             EXPECT_EQ(res, should_res);
         }
     }
+    HETEROGEN_PARAMETRIZED_TEST_APPLY(SHAPE_TEST_WITH_AXIS, axis_and_options_params);
 
     // tests where only options are given
     auto option_params(){
@@ -179,8 +179,7 @@ namespace xt
             keep_dims|initial(1.0f)|xt::evaluation_strategy::lazy
         );
     }
-    HETEROGEN_PARAMETRIZED_TEST_SUITE(SHAPE_TEST_NO_AXIS, option_params);
-    TYPED_TEST(SHAPE_TEST_NO_AXIS, no_axis)
+    HETEROGEN_PARAMETRIZED_DEFINE(SHAPE_TEST_NO_AXIS)
     {
         auto options = get_param<TypeParam>(option_params());
 
@@ -228,6 +227,7 @@ namespace xt
             EXPECT_EQ(res, should_res);
         }
     }
+    HETEROGEN_PARAMETRIZED_TEST_APPLY(SHAPE_TEST_NO_AXIS, option_params);
 
     TEST(zreducer, nested_reducers)
     {
@@ -301,3 +301,4 @@ namespace xt
     }
 }
 
+TEST_SUITE_END();

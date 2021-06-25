@@ -7,12 +7,11 @@
 * The full license is in the file LICENSE, distributed with this software. *
 ****************************************************************************/
 
-#include "gtest/gtest.h"
-
+#include "test_common.hpp"
 #include "xtensor/xnorm.hpp"
 #include "zarray/zarray.hpp"
 
-#include "test_utils.hpp"
+TEST_SUITE_BEGIN("zreducers");
 
 namespace xt
 {
@@ -26,8 +25,7 @@ namespace xt
                             [](auto && ... args){return zt::norm_l2(std::forward<decltype(args)>(args)...);})
         );
     }
-    HETEROGEN_PARAMETRIZED_TEST_SUITE(REDUCERS_NORMS, params_norm);
-    TYPED_TEST(REDUCERS_NORMS, reducers_norms)
+    HETEROGEN_PARAMETRIZED_DEFINE(REDUCERS_NORMS)
     {
         using value_type = double;
         auto params = get_param<TypeParam>(params_norm());
@@ -54,5 +52,9 @@ namespace xt
         EXPECT_EQ(res, should_res);
 
     }
+    HETEROGEN_PARAMETRIZED_TEST_APPLY(REDUCERS_NORMS, params_norm);
 }
+
+TEST_SUITE_END();
+
 
