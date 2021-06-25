@@ -13,15 +13,25 @@
 #include <tuple>
 #include <utility>
 
+#include <xtl/xoptional.hpp>
+
 #include "zdispatcher.hpp"
 #include "zarray_impl_register.hpp"
+#include "zarray_buffer_manager.hpp"
 
 namespace xt
 {
+    namespace detail
+    {
+        using buffer_index_type = typename zarray_buffer_manager::buffer_index_type;
+        using optional_buffer_index_type = xtl::xoptional<zarray_buffer_manager, bool>;
+    }
+
     template <class F, class... CT>
     class zfunction : public xexpression<zfunction<F, CT...>>
     {
     public:
+
 
         using expression_tag = zarray_expression_tag;
 
@@ -40,7 +50,7 @@ namespace xt
         std::unique_ptr<zarray_impl> allocate_result() const;
         std::size_t get_result_type_index() const;
         zarray_impl& assign_to(zarray_impl& res, const zassign_args& args) const;
-
+        zarray_impl& assign_to(zarray_buffer_manager & res, const zassign_args& args) const;
     private:
 
         using dispatcher_type = zdispatcher_t<F, sizeof...(CT)>;
@@ -50,8 +60,9 @@ namespace xt
         template <std::size_t... I>
         std::size_t get_result_type_index_impl(std::index_sequence<I...>) const;
 
-        template <std::size_t... I>
-        zarray_impl& assign_to_impl(std::index_sequence<I...>, zarray_impl& res, const zassign_args& args) const;
+
+        zarray_impl& assign_to_impl(std::index_sequence<0>,   zarray_impl& res, const zassign_args& args) const;
+        zarray_impl& assign_to_impl(std::index_sequence<0,1>, zarray_impl& res, const zassign_args& args) const;
 
         struct cache
         {
@@ -98,23 +109,49 @@ namespace xt
     
     namespace detail
     {
+
+        using zarray_impl_with_opt_buffer_index =  std::tuple<const zarray_impl &, optional_buffer_index_type>;
+
+        // this can be a  zreducer or something similar
         template <class E>
         struct zfunction_argument
         {
-            static std::size_t get_index(const E& e)
+            using argument_type = E;
+
+            static std::size_t get_index(const argument_type& e)
             {
                 return e.get_result_type_index();
             }
 
-            static const zarray_impl& get_array_impl(const E& e, zarray_impl& res, const zassign_args& args)
+            static const zarray_impl& get_array_impl(const argument_type & e, zarray_buffer_manager & buffer, const zassign_args& args)
             {
-                return e.assign_to(res, args);
+                auto i = buffer.get_free_buffer_index();
+                return e.assign_to(buffer.get_free_buffer(), args);
             }
         };
+
+
+        template <class F, class... CT>
+        struct zfunction_argument<zfunction<F, CT ...>>
+        {zarray_impl
+            using argument_type = zfunction<F, CT ...>;
+
+            static std::size_t get_index(const argument_type & e)
+            {
+                return e.get_result_type_index();
+            }
+
+            static const zarray_impl& get_array_impl(const argument_type & e,  zarray_buffer_manager & buffer, const zassign_args& args)
+            {
+                return e.assign_to(buffer, args);
+            }
+        };
+
 
         template <>
         struct zfunction_argument<zarray>
         {
+            using argument_type = zarray;
             template <class E>
             static std::size_t get_index(const E& e)
             {
@@ -122,7 +159,7 @@ namespace xt
             }
 
             template <class E>
-            static const zarray_impl& get_array_impl(const E& e, zarray_impl&, const zassign_args&)
+            static const zarray_impl& get_array_impl(const E& e,  zarray_buffer_manager & , const zassign_args&)
             {
                 return e.get_implementation();
             }
@@ -131,12 +168,14 @@ namespace xt
         template <class CTE>
         struct zfunction_argument<zscalar_wrapper<CTE>>
         {
-            static std::size_t get_index(const zscalar_wrapper<CTE>& e)
+            using argument_type = zarray;
+
+            static std::size_t get_index(const argument_type& e)
             {
                 return e.get_class_index();
             }
 
-            static const zarray_impl& get_array_impl(const zscalar_wrapper<CTE>& e, zarray_impl&, const zassign_args&)
+            static const zarray_impl& get_array_impl(const argument_type& e,  zarray_buffer_manager &, const zassign_args&)
             {
                 return e;
             }
@@ -149,9 +188,9 @@ namespace xt
         }
 
         template <class E>
-        inline const zarray_impl& get_array_impl(const E& e, zarray_impl& z, const zassign_args& args)
+        inline const zarray_impl& get_array_impl(const E& e, zarray_buffer_manager & buffer, const zassign_args& args)
         {
-            return zfunction_argument<E>::get_array_impl(e, z, args);
+            return zfunction_argument<E>::get_array_impl(e, buffer, args);
         }
     }
 
@@ -212,8 +251,17 @@ namespace xt
     template <class F, class... CT>
     inline zarray_impl& zfunction<F, CT...>::assign_to(zarray_impl& res, const zassign_args& args) const
     {
-        return assign_to_impl(std::make_index_sequence<sizeof...(CT)>(), res, args);
+        zarray_buffer_manager  buffer(res);
+        auto r =  assign_to_impl(std::make_index_sequence<sizeof...(CT)>(), buffer, args);
+
     }
+
+    template <class F, class... CT>
+    inline zarray_impl& zfunction<F, CT...>::assign_to(zarray_buffer_manager & buffer, const zassign_args& args) const
+    {
+        return assign_to_impl(std::make_index_sequence<sizeof...(CT)>(), buffer, args);
+    }
+
 
     template <class F, class... CT>
     inline std::size_t zfunction<F, CT...>::compute_dimension() const
@@ -234,10 +282,33 @@ namespace xt
     }
 
     template <class F, class... CT>
-    template <std::size_t... I>
-    inline zarray_impl& zfunction<F, CT...>::assign_to_impl(std::index_sequence<I...>, zarray_impl& res, const zassign_args& args) const
+    inline zarray_impl& zfunction<F, CT...>::assign_to_impl(std::index_sequence<0>, zarray_buffer_manager & buffers, const zassign_args& args) const
     {
-        dispatcher_type::dispatch(detail::get_array_impl(std::get<I>(m_e), res, args)..., res, args);
+
+
+        auto & array_impl = detail::get_array_impl(std::get<I>(m_e), buffers, args);
+
+
+    
+        dispatcher_type::dispatch(array_impl, buffers.get_buffer(0), args);
+
+        // in any case, buffer 1 is free
+        buffer.mark_as_free(1);
+
+        return res;
+    }
+
+    template <class F, class... CT>
+    inline zarray_impl& zfunction<F, CT...>::assign_to_impl(std::index_sequence<0,1>, zarray_buffer_manager & buffer, const zassign_args& args) const
+    {
+        auto & array_impl_0 = detail::get_array_impl(std::get<0>(m_e), buffer, args);
+        auto & array_impl_1 = detail::get_array_impl(std::get<1>(m_e), buffer, args);
+
+        dispatcher_type::dispatch(detail::get_array_impl(std::get<I>(m_e), buffer.get_free_buffer(), args)..., buffer.result_buffer(), args);
+
+        // in any case, buffer 1 is free
+        buffer.mark_as_free(1);
+
         return res;
     }
 }
