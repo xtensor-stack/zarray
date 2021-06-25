@@ -1,0 +1,33 @@
+#ifndef TEST_COMMON_MACROS_HPP
+#define TEST_COMMON_MACROS_HPP
+
+#include "doctest/doctest.h"
+
+#define TEST(A,B) TEST_CASE(#A"."#B )
+#define EXPECT_EQ(A,B) CHECK_EQ(A,B)
+#define EXPECT_NE(A,B) CHECK_NE(A,B)
+#define EXPECT_LE(A,B) CHECK_LE(A,B)
+#define EXPECT_GE(A,B) CHECK_GE(A,B)
+#define EXPECT_LT(A,B) CHECK_LT(A,B)
+#define EXPECT_GT(A,B) CHECK_GT(A,B)
+#define EXPECT_TRUE(A) CHECK_EQ(A, true)
+#define EXPECT_FALSE(A) CHECK_FALSE(A)
+
+#define ASSERT_EQ(A,B) REQUIRE_EQ(A,B)
+#define ASSERT_NE(A,B) REQUIRE_NE(A,B)
+#define ASSERT_LE(A,B) REQUIRE_LE(A,B)
+#define ASSERT_GE(A,B) REQUIRE_GE(A,B)
+#define ASSERT_LT(A,B) REQUIRE_LT(A,B)
+#define ASSERT_GT(A,B) REQUIRE_GT(A,B)
+#define ASSERT_TRUE(A) REQUIRE_EQ(A, true)
+#define ASSERT_FALSE(A) REQUIRE_FALSE(A)
+
+#define EXPECT_DOUBLE_EQ(x,y)   CHECK(x == doctest::Approx(y));
+
+#define HETEROGEN_PARAMETRIZED_DEFINE(ID)\
+    TEST_CASE_TEMPLATE_DEFINE(#ID, TypeParam, ID)
+
+#define HETEROGEN_PARAMETRIZED_TEST_APPLY(ID, TEST_FUNC)\
+    TEST_CASE_TEMPLATE_APPLY(ID, augment_t<std::decay_t<decltype(TEST_FUNC())>>)
+
+#endif

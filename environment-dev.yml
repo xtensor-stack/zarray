@@ -7,3 +7,4 @@ dependencies:
   - xtensor-io=0.12.2
   - xsimd=7.4.8
   - nlohmann_json=3.2.0
+  - doctest

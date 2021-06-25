@@ -9,6 +9,9 @@
 
 cmake_minimum_required(VERSION 3.1)
 
+find_package(doctest            REQUIRED)
+find_package(Threads)
+
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     project(zarray-test)
 
@@ -110,45 +113,6 @@ else()
   message(FATAL_ERROR  ${CMAKE_CXX_COMPILER_ID} "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
-if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
-    if(DOWNLOAD_GTEST)
-        # Download and unpack googletest at configure time
-        configure_file(downloadGTest.cmake.in googletest-download/CMakeLists.txt)
-    else()
-        # Copy local source of googletest at configure time
-        configure_file(copyGTest.cmake.in googletest-download/CMakeLists.txt)
-    endif()
-    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-                    RESULT_VARIABLE result
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
-    if(result)
-        message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-    endif()
-    execute_process(COMMAND ${CMAKE_COMMAND} --build .
-                    RESULT_VARIABLE result
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
-    if(result)
-        message(FATAL_ERROR "Build step for googletest failed: ${result}")
-    endif()
-
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-    # Add googletest directly to our build. This defines
-    # the gtest and gtest_main targets.
-    add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
-                     ${CMAKE_CURRENT_BINARY_DIR}/googletest-build EXCLUDE_FROM_ALL)
-
-    set(GTEST_INCLUDE_DIRS "${gtest_SOURCE_DIR}/include")
-    add_library(GTest::GTest INTERFACE IMPORTED)
-    target_link_libraries(GTest::GTest INTERFACE gtest)
-    add_library(GTest::Main INTERFACE IMPORTED)
-    target_link_libraries(GTest::Main INTERFACE gtest_main)
-else()
-    find_package(GTest REQUIRED)
-endif()
-
-find_package(Threads)
-
 include_directories(${GTEST_INCLUDE_DIRS} SYSTEM)
 
 set(ZARRAY_TESTS
@@ -165,19 +129,16 @@ set(ZARRAY_TESTS
 
 foreach(filename IN LISTS ZARRAY_TESTS)
     string(REPLACE ".cpp" "" targetname ${filename})
-    add_executable(${targetname} ${filename} test_init.cpp)
+    add_executable(${targetname} main.cpp ${targetname} ${filename} test_init.cpp)
     if(ZARRAY_USE_XSIMD)
         target_compile_definitions(${targetname}
                                    PRIVATE
                                    XTENSOR_USE_XSIMD)
         target_link_libraries(${targetname} PRIVATE xsimd)
     endif()
-    if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
-        add_dependencies(${targetname} gtest_main)
-    endif()
 
     target_include_directories(${targetname} PRIVATE ${ZARRAY_INCLUDE_DIR})
-    target_link_libraries(${targetname} PRIVATE zarray GTest::GTest GTest::Main ${CMAKE_THREAD_LIBS_INIT})
+    target_link_libraries(${targetname} PRIVATE zarray doctest::doctest ${CMAKE_THREAD_LIBS_INIT})
     add_custom_target(
         x${targetname}
         COMMAND ${targetname}
@@ -185,7 +146,7 @@ foreach(filename IN LISTS ZARRAY_TESTS)
     add_test(NAME ${targetname} COMMAND ${targetname})
 endforeach()
 
-add_executable(test_zarray_lib ${ZARRAY_TESTS})
+add_executable(test_zarray_lib main.cpp  ${ZARRAY_TESTS})
 if(ZARRAY_USE_XSIMD)
     target_compile_definitions(test_zarray_lib
                                PRIVATE
@@ -193,13 +154,8 @@ if(ZARRAY_USE_XSIMD)
     target_link_libraries(test_zarray_lib PRIVATE xsimd)
 endif()
 
-
-if(DOWNLOAD_GTEST OR GTEST_SRC_DIR)
-    add_dependencies(test_zarray_lib gtest_main)
-endif()
-
 target_include_directories(test_zarray_lib PRIVATE ${ZARRAY_INCLUDE_DIR})
-target_link_libraries(test_zarray_lib PRIVATE zarray GTest::GTest GTest::Main ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(test_zarray_lib PRIVATE zarray doctest::doctest ${CMAKE_THREAD_LIBS_INIT})
 
 add_custom_target(xtest COMMAND test_zarray_lib DEPENDS test_zarray_lib)
 add_test(NAME xtest COMMAND test_zarray_lib)

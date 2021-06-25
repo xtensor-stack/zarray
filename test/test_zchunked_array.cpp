@@ -7,10 +7,14 @@
 * The full license is in the file LICENSE, distributed with this software. *
 ****************************************************************************/
 
-#include <gtest/gtest.h>
+#include "test_common.hpp"
+
 #include <zarray/zarray.hpp>
 #include <xtl/xplatform.hpp>
 #include <xtl/xhalf_float.hpp>
+
+
+TEST_SUITE_BEGIN("zchunked_array");
 
 namespace xt
 {
@@ -112,7 +116,6 @@ namespace xt
         EXPECT_EQ(a, b);
     }
 
-
     TEST(zchunked_array, no_noalias_assign)
     {
         zdispatcher_t<detail::xassign_dummy_functor, 1>::init();
@@ -124,13 +127,12 @@ namespace xt
         auto a = chunked_array<double>(shape, chunk_shape);
         auto b = xarray<double>::from_shape(shape);
         b.fill(2.);
-        
+
         zarray za(a);
         zarray zb(b);
         za = zb;
         EXPECT_EQ(a, b);
     }
-
 
     TEST(zchunked_array, noalias_assign_xarray)
     {
@@ -149,3 +151,5 @@ namespace xt
         EXPECT_EQ(a, b);
     }
 }
+
+TEST_SUITE_END(); 
