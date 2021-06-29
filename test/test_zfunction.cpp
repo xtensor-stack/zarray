@@ -145,8 +145,8 @@ namespace xt
     {
 
         zdispatcher_t<detail::plus, 2>::init();
-
-
+        zdispatcher_t<detail::xassign_dummy_functor, 1>::init();
+    
         auto x0 = xarray<int>::from_shape({2,2});
         auto x1 = xarray<int>::from_shape({2,2});
 
@@ -156,7 +156,7 @@ namespace xt
         auto res = xarray<double>::from_shape({2,2});
         zarray zres(res);
 
-        zres =  x0 + x1;
+        zres =  z0 + z1;
 
     }
 
