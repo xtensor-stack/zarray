@@ -140,5 +140,25 @@ namespace xt
 
         EXPECT_EQ(zres.get_array<double>(), expected);
     }
+
+    TEST_CASE("bad_function_call")
+    {
+
+        zdispatcher_t<detail::plus, 2>::init();
+
+
+        auto x0 = xarray<int>::from_shape({2,2});
+        auto x1 = xarray<int>::from_shape({2,2});
+
+        zarray z0(x0);
+        zarray z1(x1);
+
+        auto res = xarray<double>::from_shape({2,2});
+        zarray zres(res);
+
+        zres =  x0 + x1;
+
+    }
+
 }
 TEST_SUITE_END();
