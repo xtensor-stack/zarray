@@ -42,8 +42,55 @@ namespace xt
 
         template <class... L>
         using concatenate_t = typename concatenate<L...>::type;
-    }
 
+
+        // while mpl::transformer_t take template of template
+        // as first argument we need smth which takes 
+        // a class holding a templated meta function 
+        template <class F, class L>
+        struct meta_func_transform_impl;
+
+        template < class F, template <class...> class L, class... T>
+        struct meta_func_transform_impl<F, L<T...>>
+        {
+            using type = L<typename F:: template type <T>...>;
+        };
+    
+
+        template <class F, class L>
+        struct  meta_func_transform : meta_func_transform_impl<F, L>
+        {
+        };
+
+        template < class F, class L>
+        using meta_func_transform_t = typename  meta_func_transform<F, L>::type;
+
+
+        template <class L>
+        struct pairwise_combinations_impl;
+
+        template <template <class...> class L, class ... T>
+        struct pairwise_combinations_impl<L<T ...>>
+        {   
+            using vector_t =  mpl::vector<T ...>;
+
+            template <class U>
+            struct helper
+            {
+                template<class R>
+                using type = mpl::vector<U, R>;
+            };
+
+            // unfortunately mpl::transform_t does not work here
+            template<class U>
+            using transformer_t = meta_func_transform_t<helper<U>, vector_t>;
+ 
+            using type = concatenate_t< transformer_t< T > ...>;
+        };
+
+        template<class ...L>
+        using pairwise_combinations_t = typename pairwise_combinations_impl<L ...>::type;
+    }
     /***********
      * z types *
      ***********/
@@ -86,6 +133,10 @@ namespace xt
 
     template <class T>
     using build_unary_double_t = build_unary_impl_t<T, double>;
+
+
+
+    using zunary_all_ztypes_combinations_types = detail::pairwise_combinations_t<z_types>;
 
     using zunary_ident_types = mpl::transform_t<build_unary_identity_t, z_types>;
 

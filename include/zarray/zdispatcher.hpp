@@ -194,13 +194,13 @@ namespace xt
         template <>
         struct unary_dispatching_types<xassign_dummy_functor>
         {
-            using type = zunary_func_types;
+            using type = zunary_all_ztypes_combinations_types;
         };
 
         template <>
         struct unary_dispatching_types<xmove_dummy_functor>
         {
-            using type = zunary_func_types;
+            using type = zunary_all_ztypes_combinations_types;
         };
 
         template <>
