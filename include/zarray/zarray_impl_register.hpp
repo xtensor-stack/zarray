@@ -63,12 +63,22 @@ namespace xt
     inline zarray_impl_register::zarray_impl_register()
         : m_next_index(0)
     {
+
+        insert_impl<bool>();
+
+        insert_impl<uint8_t>();
+        insert_impl<uint16_t>();
+        insert_impl<uint32_t>();
+        insert_impl<uint64_t>();
+
+        insert_impl<int8_t>();
+        insert_impl<int16_t>();
+        insert_impl<int32_t>();
+        insert_impl<int64_t>();
+
         insert_impl<float>();
         insert_impl<double>();
-        insert_impl<int32_t>();
-        insert_impl<uint32_t>();
-        insert_impl<int64_t>();
-        insert_impl<uint64_t>();
+
     }
 
     template <class T>

@@ -141,7 +141,6 @@ namespace xt
         EXPECT_EQ(zres.get_array<double>(), expected);
     }
 
-
     TEST(zfunction, math_operator_extended)
     {
         using add_dispatcher_type = zdispatcher_t<detail::plus, 2>;
@@ -161,7 +160,6 @@ namespace xt
         zarray zres(res);
 
         auto f = ((za+zb) + (zc+zd)) + zd;
-
 
         zassign_args args;
 

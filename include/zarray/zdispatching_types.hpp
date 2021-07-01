@@ -91,7 +91,9 @@ namespace xt
 
     using zunary_func_types = detail::concatenate_t<
                                   mpl::transform_t<build_unary_identity_t, z_float_types>,
-                                  mpl::transform_t<build_unary_double_t, z_int_types>
+                                  mpl::transform_t<build_unary_double_t, z_int_types>,
+                                  mpl::transform_t<build_unary_double_t, z_int_types>,
+                                  mpl::transform_t<build_unary_int64_t, z_float_types>
                               >;
 
     using zunary_op_types = detail::concatenate_t<

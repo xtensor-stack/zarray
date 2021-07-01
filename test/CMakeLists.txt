@@ -11,7 +11,6 @@ cmake_minimum_required(VERSION 3.1)
 
 find_package(doctest            REQUIRED)
 find_package(Threads)
-
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     project(zarray-test)
 
@@ -70,7 +69,7 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR (CMAKE_CXX_COMPILER_ID MATCHES "Intel" AND NOT WIN32))
   CHECK_CXX_COMPILER_FLAG(-march=native arch_native_supported)
   if(arch_native_supported AND NOT CMAKE_CXX_FLAGS MATCHES "-march")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
   endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_cxx_std_flag} -Wunused-parameter -Wextra -Wreorder -Wconversion -Wsign-conversion")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wold-style-cast -Wunused-variable -ftemplate-backtrace-limit=0")
@@ -78,10 +77,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR (CMAKE_CXX_COMPILER_ID MATCHES "Intel"
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
   endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_cxx_std_flag} /MP /bigobj")
-  set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-  add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING)
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_cxx_std_flag} /MP /bigobj")
+  # set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO)
+  # add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  # add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING)
   if (XTENSOR_DISABLE_EXCEPTIONS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHs-c-")
   else()
@@ -138,6 +137,9 @@ foreach(filename IN LISTS ZARRAY_TESTS)
 
     target_include_directories(${targetname} PRIVATE ${ZARRAY_INCLUDE_DIR})
     target_link_libraries(${targetname} PRIVATE zarray doctest::doctest ${CMAKE_THREAD_LIBS_INIT})
+
+    target_compile_options(${targetname} PRIVATE -g -O0)
+
     add_custom_target(
         x${targetname}
         COMMAND ${targetname}

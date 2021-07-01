@@ -7,6 +7,7 @@
 
 #include <xtensor/xarray.hpp>
 #include <xtensor/xmath.hpp>
+#include <xtensor/xnoalias.hpp>
 
 
 TEST_SUITE_BEGIN("zexpression_tree");
@@ -91,7 +92,6 @@ namespace xt
         }
     }
 
-
     TEST_CASE("non_trivial_expression_tree")
     {
 
@@ -151,8 +151,6 @@ namespace xt
         }
     }
 
-
-
     TEST_CASE("assign_to")
     {
 
@@ -188,7 +186,6 @@ namespace xt
         shape_type chunk_shape = {2, 3, 4};
 
 
-
         auto x0 = xarray<double>::from_shape(shape);
         auto x1 = chunked_array<double>(shape, chunk_shape);
         auto x2 = xarray<double>::from_shape(shape);
@@ -215,6 +212,37 @@ namespace xt
             zarray zres(res);
             zres =  func;
             CHECK_EQ(res, should_res);
+        }
+    }
+
+    TEST_CASE("test_casting_order")
+    {
+        zdispatcher_t<detail::plus, 2>::init();  
+        zdispatcher_t<detail::multiplies, 2>::init(); 
+        zdispatcher_t<detail::xassign_dummy_functor, 1>::init();
+        zdispatcher_t<detail::xmove_dummy_functor, 1>::init();
+
+        xarray<double> x0 = xt::ones<double>({2}) * 0.1; 
+        xarray<double> x1 = xt::ones<double>({2}) * 0.1;
+        xarray<double> x2 = xt::ones<double>({2}) * 10.0;
+        xarray<int64_t> xres = xarray<int64_t>::from_shape({2});
+
+        zarray z0(x0);
+        zarray z1(x1);
+        zarray z2(x2);
+        zarray zres(xres);
+
+        SUBCASE("direct")
+        {
+            noalias(zres) = (z0 + z1) * z2;
+            CHECK_EQ(xres(0), 2);
+        }
+        SUBCASE("indirect")
+        {
+            auto func = (z0 + z1) * z2;
+            zassign_args assign_args;
+            func.assign_to(zres.get_implementation(), assign_args);
+            CHECK_EQ(xres(0), 2);
         }
     }
 }

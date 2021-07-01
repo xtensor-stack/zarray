@@ -262,13 +262,13 @@ namespace xt
                 auto chunk_end = arr.chunk_end();
                 while (args.chunk_iter != chunk_end)
                 {
-                    zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(res, r, args);
+                    zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(r, res, args);
                     ++args.chunk_iter;
                 }
             }
             else
             {
-                zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(res, r, args);
+                zdispatcher_t<detail::xassign_dummy_functor, 1>::dispatch(r, res, args);
             }
         }
         return res;

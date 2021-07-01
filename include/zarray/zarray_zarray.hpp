@@ -237,12 +237,15 @@ namespace xt
 
     inline zarray& zarray::operator=(zarray&& rhs)
     {
+        std::cout<< " in move assign\n";
         if(this->has_implementation())
         {
+            std::cout<<"target has impl\n";
             zassign_args args;
             args.trivial_broadcast = true;
             if (p_impl->is_chunked())
             {
+                std::cout<<"chunked\n";
                 auto l = [](zarray& lhs, const zarray& rhs, zassign_args& args)
                 {
                     zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *(lhs.p_impl), args);
@@ -251,11 +254,13 @@ namespace xt
             }
             else
             {
+                std::cout<<"non chunked\n";
                 zdispatcher_t<detail::xmove_dummy_functor, 1>::dispatch(*(rhs.p_impl), *p_impl, args);
             }
         }
         else
         {
+            std::cout<<"no impl\n";
             p_impl = std::move(rhs.p_impl);
         }
         return *this;
