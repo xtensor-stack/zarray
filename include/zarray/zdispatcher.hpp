@@ -20,6 +20,23 @@ namespace xt
     // forward declaration
     class zreducer_options;
 
+    // reducer functor forward declarations
+    struct zsum_zreducer_functor;
+    struct zprod_zreducer_functor;
+    struct zmean_zreducer_functor;
+    struct zvariance_zreducer_functor;
+    struct zstddev_zreducer_functor;
+    struct zamin_zreducer_functor;
+    struct zamax_zreducer_functor;
+    struct znorm_l0_zreducer_functor;
+    struct znorm_l1_zreducer_functor;
+    struct znorm_l2_zreducer_functor;
+    struct znorm_sq_zreducer_functor;
+    struct znorm_linf_zreducer_functor;
+    struct znorm_lp_to_p_zreducer_functor;
+    struct znorm_induced_l1_zreducer_functor;
+    struct znorm_induced_linf_zreducer_functor;
+
     namespace mpl = xtl::mpl;
 
     template <class type_list, class undispatched_type_list = mpl::vector<const zassign_args>>
@@ -240,6 +257,33 @@ namespace xt
         {
             using type = zunary_classify_types;
         };
+
+
+        // reducers
+        #define  XTENSOR_DISPATCHING_TYPES(FUNCTOR, TYPES)\
+            template <>\
+            struct unary_dispatching_types<FUNCTOR>\
+            {\
+                using type = TYPES;\
+            }
+
+        XTENSOR_DISPATCHING_TYPES(zsum_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(zprod_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(zmean_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(zvariance_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(zstddev_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(zamin_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(zamax_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(znorm_l0_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(znorm_l1_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(znorm_l2_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(znorm_sq_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(znorm_linf_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(znorm_lp_to_p_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(znorm_induced_l1_zreducer_functor, zreducer_types);
+        XTENSOR_DISPATCHING_TYPES(znorm_induced_linf_zreducer_functor, zreducer_types);
+
+        #undef XTENSOR_DISPATCHING_TYPES
 
         template <class F>
         using unary_dispatching_types_t = typename unary_dispatching_types<F>::type;
