@@ -98,6 +98,7 @@ namespace xt
         CTE m_expression;
         mutable xarray<value_type> m_cache;
         mutable bool m_cache_initialized;
+        shape_type m_shape;
         nlohmann::json m_metadata;
     };
 
@@ -112,8 +113,10 @@ namespace xt
         , m_expression(std::forward<E>(e))
         , m_cache()
         , m_cache_initialized(false)
+        , m_shape(m_expression.dimension())
     {
         detail::set_data_type<value_type>(m_metadata);
+        std::copy(m_expression.shape().begin(), m_expression.shape().end(), m_shape.begin());
     }
 
     template <class CTE>
@@ -207,8 +210,7 @@ namespace xt
     template <class CTE>
     auto zexpression_wrapper<CTE>::shape() const -> const shape_type&
     {
-        compute_cache();
-        return m_cache.shape();
+        return m_shape;
     }
 
     template <class CTE>
