@@ -11,7 +11,6 @@ cmake_minimum_required(VERSION 3.1)
 
 find_package(doctest            REQUIRED)
 find_package(Threads)
-
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     project(zarray-test)
 
@@ -113,8 +112,6 @@ else()
   message(FATAL_ERROR  ${CMAKE_CXX_COMPILER_ID} "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
-include_directories(${GTEST_INCLUDE_DIRS} SYSTEM)
-
 set(ZARRAY_TESTS
     test_init.cpp
     test_zarray.cpp
@@ -125,7 +122,8 @@ set(ZARRAY_TESTS
     test_zreducer_norms.cpp
     test_zreducer_statistics.cpp
     test_zreducer_minmax.cpp
-    test_zview.cpp)
+    test_zview.cpp
+    test_zexpression_tree.cpp)
 
 foreach(filename IN LISTS ZARRAY_TESTS)
     string(REPLACE ".cpp" "" targetname ${filename})
@@ -139,6 +137,9 @@ foreach(filename IN LISTS ZARRAY_TESTS)
 
     target_include_directories(${targetname} PRIVATE ${ZARRAY_INCLUDE_DIR})
     target_link_libraries(${targetname} PRIVATE zarray doctest::doctest ${CMAKE_THREAD_LIBS_INIT})
+
+    target_compile_options(${targetname} PRIVATE -g -O0)
+
     add_custom_target(
         x${targetname}
         COMMAND ${targetname}

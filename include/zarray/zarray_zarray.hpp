@@ -201,7 +201,7 @@ namespace xt
         {
             p_impl.reset(rhs.p_impl->clone());
         }
-    }
+}
 
     inline zarray& zarray::operator=(const zarray& rhs)
     {

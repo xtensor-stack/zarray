@@ -58,8 +58,9 @@ namespace xt
         void resize(shape_type&&) override;
         bool broadcast_shape(shape_type& shape, bool reuse_cache = 0) const override;
 
-    private:
 
+    private:
+        
         zscalar_wrapper(const zscalar_wrapper&) = default;
 
         CTE m_expression;

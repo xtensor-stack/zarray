@@ -109,11 +109,12 @@ namespace xt
         auto reducer = zt::sum(za, axes, options);
         auto should_reducer = sum(a, axes , options);
         auto should_res = xt::eval(should_reducer);
-        auto res_shape = should_res.shape();
+
+        dynamic_shape<std::size_t> res_shape(should_res.shape().begin(), should_res.shape().end());
 
         // check the dimensions
         EXPECT_EQ(reducer.dimension(), should_reducer.dimension());
-        EXPECT_EQ(reducer.shape(), should_reducer.shape());
+        EXPECT_EQ(reducer.shape(), res_shape);
 
         // check the values on assignment
         {
@@ -190,10 +191,10 @@ namespace xt
         auto reducer = zt::sum(za, options);
         auto should_reducer = sum(a, options);
         auto should_res = xt::eval(should_reducer);
-        auto res_shape = should_res.shape();
+        dynamic_shape<std::size_t> should_shape(should_res.shape().begin(), should_res.shape().end());
 
         EXPECT_EQ(reducer.dimension(), should_reducer.dimension());
-        EXPECT_EQ(reducer.shape(), should_reducer.shape());
+        EXPECT_EQ(reducer.shape(), should_shape);
 
         // check the values on assignment
         {
