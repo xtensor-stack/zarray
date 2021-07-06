@@ -150,6 +150,18 @@ namespace xt
         noalias(za) = b;
         EXPECT_EQ(a, b);
     }
+
+    TEST(zchunked_array, bug20)
+    {
+        std::vector<size_t> shape = {4, 4};
+        std::vector<size_t> chunk_shape = {2, 2};
+        auto a1 = chunked_array<int>(shape, chunk_shape);
+        auto a2 = chunked_array<int>(shape, chunk_shape) = arange(4 * 4).reshape({4, 4});
+        zarray z1(a1);
+        z1 = a2;
+
+        EXPECT_EQ(a1, a2);
+    }
 }
 
 TEST_SUITE_END(); 
