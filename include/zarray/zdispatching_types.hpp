@@ -153,6 +153,15 @@ namespace xt
                                 mpl::transform_t<build_unary_int32_t, z_small_int_types>
                             >;
 
+    using zreducer_types = detail::concatenate_t<
+                            mpl::transform_t<build_unary_identity_t, z_big_int_types>,
+                            mpl::transform_t<build_unary_identity_t, z_float_types>,
+                            mpl::transform_t<build_unary_int32_t, z_small_int_types>,
+                            mpl::transform_t<build_unary_double_t, mpl::vector<float>>,
+                            mpl::transform_t<build_unary_double_t, z_small_int_types>,
+                            mpl::transform_t<build_unary_double_t, z_big_int_types>
+                        >;
+
     using zunary_bool_func_types = mpl::transform_t<build_unary_bool_t, z_types>;
 
     using zunary_classify_types = mpl::transform_t<build_unary_bool_t, z_float_types>;

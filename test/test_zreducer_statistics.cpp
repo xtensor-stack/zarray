@@ -52,6 +52,26 @@ namespace xt
         EXPECT_EQ(res, should_res);
     }
     HETEROGEN_PARAMETRIZED_TEST_APPLY(REDUCERS_STATISTICS, params_statistics);
+
+
+
+    TEST_CASE("mixed_types")
+    {
+        SUBCASE("float -> double")
+        {
+            auto a = xarray<float>::from_shape({4,6,8});
+            zarray za(a);
+            zarray zres = zt::mean(za, {1});
+            EXPECT_TRUE(zres.can_get_array<double>());
+        }
+        SUBCASE("int -> double")
+        {
+            auto a = xarray<int>::from_shape({4,6,8});
+            zarray za(a);
+            zarray zres = zt::mean(za, {1});
+            EXPECT_TRUE(zres.can_get_array<double>());
+        }
+    }
 }
 
 TEST_SUITE_END(); 
