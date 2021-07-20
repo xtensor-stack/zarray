@@ -86,6 +86,15 @@ set(ZARRAY_HEADERS
     ${ZARRAY_INCLUDE_DIR}/zarray/zmath.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zscalar_wrapper.hpp
     ${ZARRAY_INCLUDE_DIR}/zarray/zwrappers.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zfunctors.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zarray_impl_register.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zmpl.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zarray_temporary_pool.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zinit.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zreducers.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zreducer.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zreducer_options.hpp
+    ${ZARRAY_INCLUDE_DIR}/zarray/zarray_zarray.hpp
 )
 
 add_library(zarray INTERFACE)
