@@ -30,13 +30,13 @@ make install
 
 ## Dependencies
 
-`zarray` depends on `xtensor`:
+`zarray` depends on `xtensor` and `nlohmann_json`:
 
-| `zarray` | `xtensor` |
-|----------|-----------|
-|  master  |  0.23.8   |
-|  0.1.0   |  0.23.8   |
-|  0.0.6   |  0.23.8   |
+| `zarray` | `xtensor` | `nlohmann_json` |
+|----------|-----------|-----------------|
+|  master  |  0.23.8   |  3.2.0          |
+|  0.1.0   |  0.23.8   |  3.2.0          |
+|  0.0.6   |  0.23.8   |  3.2.0          |
 
 ## Usage
 
